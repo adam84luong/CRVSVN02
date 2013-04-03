@@ -1,7 +1,9 @@
 ﻿using Common.Contracts.Prepaid.Records;
 using Common.Contracts.Prepaid.Requests;
 using Common.Contracts.Prepaid.Responses;
+using Payjr.Core.Adapters;
 using Payjr.Core.Providers;
+using Payjr.Entity.HelperClasses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +26,20 @@ namespace Payjr.Core.ServiceCommands.Prepaid
 
         protected override bool OnExecute(RetrieveTransactionResponse response)
         {
-            // cai dat code, co the xay ra loi, exception o day
+           response.CardTransactions.Add
+               ( new CardTransactionRecord
+               {
+               
+               }
+               )
+          EntityCollection<CardTransactionRecord> cardTransactions = AdapterFactory.TransactionAdapter.RetrieveCardTransactionByTranID(AccountID, startDate, endDate);
+            FSVTransactionList transactionList = new FSVTransactionList(cardTransactions.Count);
+            foreach (CardTransactionEntity trans in cardTransactions)
+            {
+                transactionList.Add(trans, BusinessParentUser.UserEntity as TeenEntity);
+            }
+            return transactionList.FinancialTransactions;
+           // cai dat code, co the xay ra loi, exception o day
             //response.CardTransactions.Add
             //(
             //    new CardTransactionRecord
@@ -68,14 +83,15 @@ namespace Payjr.Core.ServiceCommands.Prepaid
             if (!request.Configuration.ApplicationKey.HasValue)
             {
                 throw new ArgumentException("request.Configuration.ApplicationKey must be set", "request");
-            }                      
+            }
+
             if ( request.NumberPerPage<=0)
             {
-                throw new ArgumentException("request.NumberPerPage must be set", "request");
+                throw new ArgumentException("request.NumberPerPage must be later than 0", "request");
             }
             if ( request.PageNumber <= 0)
             {
-                throw new ArgumentException("request.PageNumber must must be set", "request");
+                throw new ArgumentException("request.PageNumber must be later than 0", "request");
             }
             int _result = DateTime.Compare(request.StartDate, request.EndDate);
             if (_result > 0)
