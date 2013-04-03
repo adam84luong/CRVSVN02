@@ -127,7 +127,29 @@ namespace Payjr.DataAdapters
                 }
             }
         }
-     
+        public EntityCollection<CardTransactionEntity> RetrieveCardTransactionsSearch(String cardIdentifier, DateTime startDate, DateTime endDate)
+        {
+            using (DataAccessAdapter adapter = new DataAccessAdapter(true))
+            {
+                try
+                {
+                    EntityCollection<CardTransactionEntity> cardTransactions = new EntityCollection<CardTransactionEntity>(new CardTransactionEntityFactory());
+                    IRelationPredicateBucket bucket = new RelationPredicateBucket();
+                    bucket.PredicateExpression.Add(PrepaidCardAccountFields.CardIdentifier == cardIdentifier);
+                    bucket.PredicateExpression.Add(CardTransactionFields.TransactionDate <= endDate);
+                    bucket.PredicateExpression.Add(CardTransactionFields.TransactionDate >= startDate);
+                    IPrefetchPath2 path = new PrefetchPath2((int)EntityType.CardTransactionEntity);
+
+                    adapter.FetchEntityCollection(cardTransactions, bucket, path);
+                    return cardTransactions;
+                }
+                catch (ORMException exceptionMessage)
+                {
+                    DataAccessException exception = new DataAccessException(exceptionMessage.Message, exceptionMessage);
+                    throw exception;
+                }
+            }
+        }
 
         #endregion //CardTransaction
 
