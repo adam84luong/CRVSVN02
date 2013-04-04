@@ -54,6 +54,7 @@ namespace Payjr.Core.ServiceCommands.PrepaidCard
                 throw new ArgumentNullException("request", "request must be set");
             }
             var addCardActivationsRecord = request.CardActivations;
+
             if (addCardActivationsRecord == null)
             {
                 throw new ArgumentException("request.Configuration must be set", "request");
