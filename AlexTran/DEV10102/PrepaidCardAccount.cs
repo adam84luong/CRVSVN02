@@ -687,7 +687,20 @@ namespace Payjr.Core.FinancialAccounts
             }
             return transactionList.FinancialTransactions;
         }
-         /// <summary>
+        public List<FinancialTransaction> RetrieveTransactions(DateTime startDate, DateTime endDate, int pageNumber=-1, int pageSize=-1)
+        {
+            if (BusinessParentUser == null) { throw new InvalidOperationException("Error Creating Money Movement prepaid account " + AccountID + ".  Account must be associated with a user"); }
+
+            EntityCollection<CardTransactionEntity> cardTransactions = AdapterFactory.FinancialAccountDataAdapter.RetrieveCardTransactionsByAccount(AccountID, startDate, endDate, pageNumber, pageSize);
+            FSVTransactionList transactionList = new FSVTransactionList(cardTransactions.Count);
+            foreach (CardTransactionEntity trans in cardTransactions)
+            {
+                transactionList.Add(trans, BusinessParentUser.UserEntity as TeenEntity);
+            }
+            return transactionList.FinancialTransactions;
+        }
+
+        /// <summary>
         /// Gets the available transfer counts based on the velocity limits for the account.
         /// </summary>
         /// <returns>

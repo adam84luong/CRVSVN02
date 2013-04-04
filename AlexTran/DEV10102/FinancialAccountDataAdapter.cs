@@ -1527,6 +1527,31 @@ namespace Payjr.DataAdapters
             }
         }
 
+        public EntityCollection<CardTransactionEntity> RetrieveCardTransactionsByAccount(Guid accountID, DateTime startDate, DateTime endDate, int pageNumber=-1, int pageSize=-1)
+        {
+            using (DataAccessAdapter adapter = new DataAccessAdapter(true))
+            {
+                try
+                {
+                    EntityCollection<CardTransactionEntity> cardTransactions = new EntityCollection<CardTransactionEntity>(new CardTransactionEntityFactory());
+                    IRelationPredicateBucket bucket = new RelationPredicateBucket();
+                    bucket.PredicateExpression.Add(CardTransactionFields.PrepaidAccountId == accountID);
+                    bucket.PredicateExpression.Add(CardTransactionFields.TransactionDate <= endDate);
+                    bucket.PredicateExpression.Add(CardTransactionFields.TransactionDate >= startDate);
+                    IPrefetchPath2 path = new PrefetchPath2((int)EntityType.CardTransactionEntity);
+                    adapter.FetchEntityCollection(cardTransactions, bucket, 0, null, path, pageNumber, pageSize);
+
+                    return cardTransactions;
+                }
+                catch (ORMException exceptionMessage)
+                {
+                    DataAccessException exception = new DataAccessException(exceptionMessage.Message, exceptionMessage);
+                    throw exception;
+                }
+            }
+        }
+      
+
         /// <summary>
         /// Creates a prepaid card account journal entry.
         /// </summary>
