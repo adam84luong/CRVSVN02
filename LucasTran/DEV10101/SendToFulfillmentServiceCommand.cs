@@ -20,13 +20,11 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
 
         protected override bool OnExecute(SendToFulfillmentResponse response)
         {
-            // chua cai dat cho cai nay ah
 			return true;
         }
 
         protected override void Validate(SendToFulfillmentRequest request)
         {
-            // may ha buoi
 			if (request == null)
             {
                 throw new ArgumentNullException("request", "request must be set");
