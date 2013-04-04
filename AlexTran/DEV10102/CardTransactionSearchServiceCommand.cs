@@ -2,9 +2,11 @@
 using Common.Contracts.Prepaid.Requests;
 using Common.Contracts.Prepaid.Responses;
 using Payjr.Core.Adapters;
+using Payjr.Core.FinancialAccounts;
 using Payjr.Core.FSV.Transactions;
 using Payjr.Core.Identifiers;
 using Payjr.Core.Providers;
+using Payjr.Core.Transactions;
 using Payjr.Entity.EntityClasses;
 using Payjr.Entity.HelperClasses;
 using System;
@@ -29,26 +31,28 @@ namespace Payjr.Core.ServiceCommands.Prepaid
 
         protected override bool OnExecute(RetrieveTransactionResponse response)
         {
-            EntityCollection<CardTransactionEntity> cardTransactions = AdapterFactory.TransactionAdapter.RetrieveCardTransactionsSearch(_cardIdentifier, _startDate, _endDate);
-            foreach (CardTransactionEntity trans in cardTransactions)
+            // wait PrepaidCardIdentifier check in.
+            Guid prepaidCardID = new Identifiers.UserIdentifier(_cardIdentifier).ID;
+            PrepaidCardAccount prepaidCardAccount = PrepaidCardAccount.RetrievePrepaidCardAccountByID(prepaidCardID);
+            List<FinancialTransaction> cardTransactions = prepaidCardAccount.RetrieveTransactions(_startDate, _endDate,_pageNumber,_numberPerPage);
+            foreach (FinancialTransaction trans in cardTransactions)
             {
-
                 response.CardTransactions.Add
                     (
                     new CardTransactionRecord
                     {
+                        ActingUserIdentifier=new CreditCardIdentifier(prepaidCardAccount.AccountID).ToString(),
                         Amount = trans.Amount,
-                        Date = trans.TransactionDate,
-                        Description = trans.MerchantRef,
-                        LongTransactionTypeDescription = trans.Ref1,
-                        MerchantCategoryGroup = trans.Mmc.Trim(),
+                        Date = DateTime.Parse(trans.DateString),// value Date? maybe equal: Null, N/A. please check
+                        Description = trans.Description,
+                        LongTransactionTypeDescription = trans.FormattedDescription,
+                      //  MerchantCategoryGroup = trans.Mmc.Trim(),  Not found. please check
                         RunningBalance = trans.RunningBalance,
-                        ShortTransactionTypeDescription = trans.Ref2,
-                        TransactionNumber = trans.TransactionType.Trim()
+                        ShortTransactionTypeDescription = trans.ShortTransactionTypeDescription,
+                        TransactionNumber = trans.TransactionProgram.Trim()
                     }
                     );
             }
-
           return true;
         }
 
@@ -63,18 +67,19 @@ namespace Payjr.Core.ServiceCommands.Prepaid
             {
                 throw new ArgumentException("CardIdentifier must be set", "request.CardIdentifier");
             }
-            if (request.Configuration == null)
+
+            if (request.PageNumber <= 0 )
             {
-                throw new ArgumentException("request.Configuration must be set", "request");
+                throw new ArgumentException("PageNumber must >=0", "request.PageNumber");
             }
-            if (!request.Configuration.ApplicationKey.HasValue)
+            if (request.NumberPerPage <= 0 )
             {
-                throw new ArgumentException("request.Configuration.ApplicationKey must be set", "request");
-            }        
+                throw new ArgumentException("PageNumber must >=0", "request.NumberPerPage");
+            }
             int _result = DateTime.Compare(request.StartDate, request.EndDate);
             if (_result > 0)
             {
-                throw new ArgumentException("request.StartDate must earlier than is request.EndDate", "request");
+                throw new ArgumentException("StartDate must earlier than is EndDate", "request.StartDate, request.EndDate");
             }
 
             _cardIdentifier = request.CardIdentifier;
