@@ -20,7 +20,7 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
 
         protected override bool OnExecute(SendToFulfillmentResponse response)
         {
-			return true;
+			return true;// nho Adam review
         }
 
         protected override void Validate(SendToFulfillmentRequest request)
