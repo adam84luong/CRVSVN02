@@ -53,11 +53,17 @@ namespace Payjr.Core.ServiceCommands.PrepaidCard
             {
                 throw new ArgumentNullException("request", "request must be set");
             }
-            if (request.Configuration == null)
+            var addCardActivationsRecord = request.CardActivations;
+            if (addCardActivationsRecord == null)
             {
                 throw new ArgumentException("request.Configuration must be set", "request");
             }
-            if (request.CardActivations.Count == 0)
+            if (addCardActivationsRecord.Count == 0)
+            {
+                throw new ArgumentException("request.Requests must have item", "request");
+            }
+            
+            if(cardActivationRecord.ActingUserIdentifier == null)
             {
                 throw new ArgumentException("request.Requests must have item", "request");
             }
