@@ -80,9 +80,9 @@ namespace Payjr.Core.ServiceCommands.Prepaid
             {
                 throw new ArgumentException("CardIdentifier must be set", "request.CardIdentifier");
             }
-            if (!(request.PageNumber >= 0 && request.PageNumber <= 1) )
+            if (request.PageNumber < 0 )
             {
-                throw new ArgumentException("PageNumber is 0 or 1", "request.PageNumber");
+                throw new ArgumentException("PageNumber must >=0", "request.PageNumber");
             }
             if (request.NumberPerPage < 0 )
             {

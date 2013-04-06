@@ -72,14 +72,14 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
         public void Execute_Failure_PageNumberIsZero()
         {
             var request = CreateRetrieveTransactionRequest(true);
-            request.PageNumber =5;
+            request.PageNumber =-1;
             var target = new CardTransactionSearchServiceCommand(ProviderFactory);
             var result = target.Execute(request);
             Assert.IsNotNull(result.Status);
             Assert.IsFalse(result.Status.IsSuccessful);
             Assert.AreEqual(
                 string.Format(
-                    "PageNumber is 0 or 1{0}Parameter name: request.PageNumber",
+                    "PageNumber must >=0{0}Parameter name: request.PageNumber",
                     Environment.NewLine),
                 result.Status.ErrorMessage);
         }
