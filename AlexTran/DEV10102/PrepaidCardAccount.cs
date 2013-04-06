@@ -687,7 +687,7 @@ namespace Payjr.Core.FinancialAccounts
             }
             return transactionList.FinancialTransactions;
         }
-        public List<FinancialTransaction> RetrieveTransactions(DateTime startDate, DateTime endDate, int pageNumber=-1, int pageSize=-1)
+        public List<FinancialTransaction> RetrieveTransactions(DateTime startDate, DateTime endDate, int pageNumber, int pageSize)
         {
             if (BusinessParentUser == null) { throw new InvalidOperationException("Error Creating Money Movement prepaid account " + AccountID + ".  Account must be associated with a user"); }
 

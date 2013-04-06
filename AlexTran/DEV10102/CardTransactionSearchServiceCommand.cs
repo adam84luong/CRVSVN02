@@ -1,6 +1,7 @@
 ﻿using Common.Contracts.Prepaid.Records;
 using Common.Contracts.Prepaid.Requests;
 using Common.Contracts.Prepaid.Responses;
+using Common.Contracts.Shared.Records;
 using Payjr.Core.Adapters;
 using Payjr.Core.FinancialAccounts;
 using Payjr.Core.FSV.Transactions;
@@ -26,33 +27,45 @@ namespace Payjr.Core.ServiceCommands.Prepaid
         public int _numberPerPage;
         public int _pageNumber;
         private DateTime _startDate;
+        private PrepaidCardAccount _prepaidCardAccount;
+        private Guid _prepaidCardID;
 
         public CardTransactionSearchServiceCommand(IProviderFactory providers) : base(providers) { }
 
         protected override bool OnExecute(RetrieveTransactionResponse response)
         {
-            // wait PrepaidCardIdentifier check in.
-            Guid prepaidCardID = new Identifiers.UserIdentifier(_cardIdentifier).ID;
-            PrepaidCardAccount prepaidCardAccount = PrepaidCardAccount.RetrievePrepaidCardAccountByID(prepaidCardID);
-            List<FinancialTransaction> cardTransactions = prepaidCardAccount.RetrieveTransactions(_startDate, _endDate,_pageNumber,_numberPerPage);
-            foreach (FinancialTransaction trans in cardTransactions)
+            try
             {
-                response.CardTransactions.Add
-                    (
-                    new CardTransactionRecord
-                    {
-                        ActingUserIdentifier=new CreditCardIdentifier(prepaidCardAccount.AccountID).ToString(),
-                        Amount = trans.Amount,
-                        Date = DateTime.Parse(trans.DateString),// value Date? maybe equal: Null, N/A. please check
-                        Description = trans.Description,
-                        LongTransactionTypeDescription = trans.FormattedDescription,
-                      //  MerchantCategoryGroup = trans.Mmc.Trim(),  Not found. please check
-                        RunningBalance = trans.RunningBalance,
-                        ShortTransactionTypeDescription = trans.ShortTransactionTypeDescription,
-                        TransactionNumber = trans.TransactionProgram.Trim()
-                    }
-                    );
+                List<FinancialTransaction> cardTransactions = _prepaidCardAccount.RetrieveTransactions(_startDate, _endDate, _pageNumber, _numberPerPage);
+                foreach (FSVDBTransaction trans in cardTransactions)
+                {
+                    response.CardTransactions.Add
+                     (
+                     new CardTransactionRecord
+                     {
+                         ActingUserIdentifier = new Identifiers.UserIdentifier(_prepaidCardAccount.UserID.Value).Identifier,
+                         Amount = trans.Amount,
+                         Date = DateTime.Parse(trans.DateString),
+                         Description = trans.Description,
+                         LongTransactionTypeDescription = trans.LongTransactionTypeDescription,
+                         MerchantCategoryGroup = trans.CardTransaction.Mmc, 
+                         RunningBalance = trans.RunningBalance,
+                         ShortTransactionTypeDescription = trans.ShortTransactionTypeDescription,
+                         TransactionNumber = trans.TransactionNumber.Trim()
+                     }
+                     );          
+                }
+                response.CardIdentifier = _cardIdentifier;
+                response.Status.IsSuccessful = true;
+                response.TotalTransactions = cardTransactions.Count;
             }
+            catch (Exception ex)
+            {
+                response.Status.IsSuccessful = false;
+                response.Status.ErrorMessage = ex.Message;
+                return false;
+            }
+          
           return true;
         }
 
@@ -67,20 +80,28 @@ namespace Payjr.Core.ServiceCommands.Prepaid
             {
                 throw new ArgumentException("CardIdentifier must be set", "request.CardIdentifier");
             }
-
-            if (request.PageNumber <= 0 )
+            if (!(request.PageNumber >= 0 && request.PageNumber <= 1) )
             {
-                throw new ArgumentException("PageNumber must >=0", "request.PageNumber");
+                throw new ArgumentException("PageNumber is 0 or 1", "request.PageNumber");
             }
-            if (request.NumberPerPage <= 0 )
+            if (request.NumberPerPage < 0 )
             {
-                throw new ArgumentException("PageNumber must >=0", "request.NumberPerPage");
+                throw new ArgumentException("NumberPerPage must >=0", "request.NumberPerPage");
             }
             int _result = DateTime.Compare(request.StartDate, request.EndDate);
             if (_result > 0)
             {
                 throw new ArgumentException("StartDate must earlier than is EndDate", "request.StartDate, request.EndDate");
             }
+            try
+            {
+                _prepaidCardID = new Identifiers.PrepaidCardAccountIdentifier(request.CardIdentifier).PersistableID;
+                _prepaidCardAccount = PrepaidCardAccount.RetrievePrepaidCardAccountByID(_prepaidCardID);
+             }
+            catch 
+            {
+                throw new Exception(string.Format("Could not found a CardTransaction with CardIdentifier = {0}", request.CardIdentifier));
+             }
 
             _cardIdentifier = request.CardIdentifier;
             _endDate = request.EndDate;

@@ -1527,7 +1527,7 @@ namespace Payjr.DataAdapters
             }
         }
 
-        public EntityCollection<CardTransactionEntity> RetrieveCardTransactionsByAccount(Guid accountID, DateTime startDate, DateTime endDate, int pageNumber=-1, int pageSize=-1)
+        public EntityCollection<CardTransactionEntity> RetrieveCardTransactionsByAccount(Guid accountID, DateTime startDate, DateTime endDate, int pageNumber, int pageSize)
         {
             using (DataAccessAdapter adapter = new DataAccessAdapter(true))
             {
@@ -1539,9 +1539,10 @@ namespace Payjr.DataAdapters
                     bucket.PredicateExpression.Add(CardTransactionFields.TransactionDate <= endDate);
                     bucket.PredicateExpression.Add(CardTransactionFields.TransactionDate >= startDate);
                     IPrefetchPath2 path = new PrefetchPath2((int)EntityType.CardTransactionEntity);
-                    adapter.FetchEntityCollection(cardTransactions, bucket, 0, null, path, pageNumber, pageSize);
-
-                    return cardTransactions;
+                    SortExpression sortexp = new SortExpression();
+                    sortexp.Add(CardTransactionFields.TransactionDate | SortOperator.Descending);
+                    adapter.FetchEntityCollection(cardTransactions, bucket, 0, sortexp,path, pageNumber, pageSize);
+                   return cardTransactions;
                 }
                 catch (ORMException exceptionMessage)
                 {
