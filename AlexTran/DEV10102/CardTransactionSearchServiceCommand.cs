@@ -28,47 +28,35 @@ namespace Payjr.Core.ServiceCommands.Prepaid
         public int _pageNumber;
         private DateTime _startDate;
         private PrepaidCardAccount _prepaidCardAccount;
-        private Guid _prepaidCardID;
+   
 
         public CardTransactionSearchServiceCommand(IProviderFactory providers) : base(providers) { }
 
         protected override bool OnExecute(RetrieveTransactionResponse response)
         {
-            try
-            {
                 List<FinancialTransaction> cardTransactions = _prepaidCardAccount.RetrieveTransactions(_startDate, _endDate, _pageNumber, _numberPerPage);
                 foreach (FSVDBTransaction trans in cardTransactions)
-                {
-                    response.CardTransactions.Add
-                     (
-                     new CardTransactionRecord
-                     {
-                         ActingUserIdentifier = new Identifiers.UserIdentifier(_prepaidCardAccount.UserID.Value).Identifier,
-                         Amount = trans.Amount,
-                         Date = DateTime.Parse(trans.DateString),
-                         Description = trans.Description,
-                         LongTransactionTypeDescription = trans.LongTransactionTypeDescription,
-                         MerchantCategoryGroup = trans.CardTransaction.Mmc, 
-                         RunningBalance = trans.RunningBalance,
-                         ShortTransactionTypeDescription = trans.ShortTransactionTypeDescription,
-                         TransactionNumber = trans.TransactionNumber.Trim()
-                     }
-                     );          
-                }
-                response.CardIdentifier = _cardIdentifier;
-                response.Status.IsSuccessful = true;
-                response.TotalTransactions = cardTransactions.Count;
-            }
-            catch (Exception ex)
-            {
-                response.Status.IsSuccessful = false;
-                response.Status.ErrorMessage = ex.Message;
-                return false;
-            }
-          
-          return true;
+                    {
+                        response.CardTransactions.Add
+                         (
+                         new CardTransactionRecord
+                         {
+                             ActingUserIdentifier = new Identifiers.UserIdentifier(_prepaidCardAccount.UserID.Value).Identifier,
+                             Amount = trans.Amount,
+                             Date = DateTime.Parse(trans.DateString),
+                             Description = trans.Description,
+                             LongTransactionTypeDescription = trans.LongTransactionTypeDescription,
+                             MerchantCategoryGroup = trans.CardTransaction.Mmc,
+                             RunningBalance = trans.RunningBalance,
+                             ShortTransactionTypeDescription = trans.ShortTransactionTypeDescription,
+                             TransactionNumber = trans.TransactionNumber.Trim()
+                         }
+                         );
+                    }
+                    response.CardIdentifier = _cardIdentifier;
+                    response.TotalTransactions = cardTransactions.Count;                                                
+                return true;
         }
-
 
         protected override void Validate(RetrieveTransactionRequest request)
         {
@@ -79,11 +67,13 @@ namespace Payjr.Core.ServiceCommands.Prepaid
             if (string.IsNullOrWhiteSpace(request.CardIdentifier))
             {
                 throw new ArgumentException("CardIdentifier must be set", "request.CardIdentifier");
-            }
+            }      
+            _pageNumber = Convert.ToString(request.PageNumber) == string.Empty ? 0 : request.PageNumber;
             if (request.PageNumber < 0 )
             {
                 throw new ArgumentException("PageNumber must >=0", "request.PageNumber");
             }
+            _numberPerPage = Convert.ToString(request.NumberPerPage) == string.Empty ? 0 : request.NumberPerPage;
             if (request.NumberPerPage < 0 )
             {
                 throw new ArgumentException("NumberPerPage must >=0", "request.NumberPerPage");
@@ -95,7 +85,7 @@ namespace Payjr.Core.ServiceCommands.Prepaid
             }
             try
             {
-                _prepaidCardID = new Identifiers.PrepaidCardAccountIdentifier(request.CardIdentifier).PersistableID;
+                Guid _prepaidCardID = new Identifiers.PrepaidCardAccountIdentifier(request.CardIdentifier).PersistableID;
                 _prepaidCardAccount = PrepaidCardAccount.RetrievePrepaidCardAccountByID(_prepaidCardID);
              }
             catch 
@@ -108,8 +98,7 @@ namespace Payjr.Core.ServiceCommands.Prepaid
             _startDate = request.StartDate;
             _filteredForUserViewing = request.FilteredForUserViewing;
             _includeReplacementCards = request.IncludeReplacementCards;
-            _numberPerPage = request.NumberPerPage;
-            _pageNumber = request.PageNumber;
+         
         }
     }
 }

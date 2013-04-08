@@ -16,6 +16,12 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
     [TestClass]
     public class CardTransactionSearchServiceCommandTest : TestBase2
     {
+        private RetrieveTransactionRequest _request;
+        [TestInitialize]
+        public void InitializeTest()
+        {
+             _request = CreateRetrieveTransactionRequest(true);
+        }
         [TestMethod]
         public void Execute_Successful()
         {
@@ -27,14 +33,13 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
             CultureEntity culture = TestEntityFactory.CreateCulture("Culture");
             TestEntityFactory.CreateTeen(_branding, theme, culture, out parent, out teen, true);
             TestEntityFactory.CreatePrepaidModule(_branding.BrandingId);
-            CreatePrepaidAccount(teen, true, PrepaidCardStatus.Good);
+            TestEntityFactory.CreatePrepaidAccount(teen, true, PrepaidCardStatus.Good);       
             TestEntityFactory.CreateTransactionLookup("1102", "Short", "Long", true, 0, true);         
             CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1102", "1", "123", DateTime.Today);
-         
-            var request = CreateRetrieveTransactionRequest(true);
-            request.CardIdentifier = "PJRPCA:" + teen.FinancialAccounts.ActivePrepaidCardAccount.AccountID.ToString().ToUpper();
+           
+            _request.CardIdentifier = "PJRPCA:" + teen.FinancialAccounts.ActivePrepaidCardAccount.AccountID.ToString().ToUpper();
             var target = new CardTransactionSearchServiceCommand(ProviderFactory);
-            var result = target.Execute(request);
+            var result = target.Execute(_request);
             Assert.IsNotNull(result.Status);
             Assert.IsTrue(result.Status.IsSuccessful);
             Assert.AreEqual(1, result.CardTransactions.Count);        
@@ -42,9 +47,9 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
         [TestMethod]
         public void Execute_Failure_RequestIsNull()
         {
-            RetrieveTransactionRequest request = null;
+            _request = null;
             var target = new CardTransactionSearchServiceCommand(ProviderFactory);
-            var result = target.Execute(request);
+            var result = target.Execute(_request);
             Assert.IsNotNull(result.Status);
             Assert.IsFalse(result.Status.IsSuccessful);
             Assert.AreEqual(
@@ -55,26 +60,24 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
         [TestMethod]
         public void Execute_Failure_PrepaidCardAccountIsNull()
         {
-            var request = CreateRetrieveTransactionRequest(true);
-            request.CardIdentifier = "PJRPCA:12345678-1234-1234-1234-123456123456";
+            _request.CardIdentifier = "PJRPCA:12345678-1234-1234-1234-123456123456";
             var target = new CardTransactionSearchServiceCommand(ProviderFactory);
-            var result = target.Execute(request);
+            var result = target.Execute(_request);
             Assert.IsNotNull(result.Status);
             Assert.IsFalse(result.Status.IsSuccessful);
             Assert.AreEqual(
              string.Format(
                  "Could not found a CardTransaction with CardIdentifier = {0}",
-                 request.CardIdentifier),
+                 _request.CardIdentifier),
              result.Status.ErrorMessage);        
         }
 
         [TestMethod]
         public void Execute_Failure_PageNumberIsZero()
         {
-            var request = CreateRetrieveTransactionRequest(true);
-            request.PageNumber =-1;
+            _request.PageNumber = -1;
             var target = new CardTransactionSearchServiceCommand(ProviderFactory);
-            var result = target.Execute(request);
+            var result = target.Execute(_request);
             Assert.IsNotNull(result.Status);
             Assert.IsFalse(result.Status.IsSuccessful);
             Assert.AreEqual(
@@ -87,10 +90,9 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
         [TestMethod]
         public void Execute_Failure_NumberPerPageIsZero()
         {
-            var request = CreateRetrieveTransactionRequest(true);
-            request.NumberPerPage = -1;
+            _request.NumberPerPage = -1;
             var target = new CardTransactionSearchServiceCommand(ProviderFactory);
-            var result = target.Execute(request);
+            var result = target.Execute(_request);
             Assert.IsNotNull(result.Status);
             Assert.IsFalse(result.Status.IsSuccessful);
             Assert.AreEqual(
@@ -103,11 +105,10 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
         [TestMethod]
         public void Execute_Failure_CompareDate()
         {
-            var request = CreateRetrieveTransactionRequest(true);
-            request.StartDate = DateTime.Today.AddDays(1);
-            request.EndDate = DateTime.Today.AddDays(-1);
-            var target = new CardTransactionSearchServiceCommand(ProviderFactory);         
-            var result = target.Execute(request);
+            _request.StartDate = DateTime.Today.AddDays(1);
+            _request.EndDate = DateTime.Today.AddDays(-1);
+            var target = new CardTransactionSearchServiceCommand(ProviderFactory);
+            var result = target.Execute(_request);
             Assert.IsNotNull(result.Status);
             Assert.IsFalse(result.Status.IsSuccessful);
             Assert.AreEqual(
@@ -138,35 +139,13 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
                 result.CardIdentifier = "PJRPCA:12345678-1234-1234-1234-123456123456";
                 result.StartDate = DateTime.Today.AddDays(-1);
                 result.EndDate = DateTime.Today.AddDays(1);
-                result.NumberPerPage =0;
+                result.NumberPerPage = 0;
                 result.PageNumber = 0;
             }
 
             return result;
-        }
-      
-        private void CreatePrepaidAccount(Teen user, bool isActive, PrepaidCardStatus status)
-        {
-            using (DataAccessAdapter adapter = new DataAccessAdapter(true))
-            {
-                PrepaidCardAccountEntity prepaidCard = new PrepaidCardAccountEntity();
-                prepaidCard.ActivationMethod = PrepaidActivationMethod.unknown;
-                prepaidCard.Active = isActive;
-                prepaidCard.ActiveteDateTime = null;
-                prepaidCard.BrandingCardDesignId = null;
-                prepaidCard.CardIdentifier = new Guid("12345678-1234-1234-1234-123456123456").ToByteArray();
-                prepaidCard.CardNumber = "213156484984651";
-                prepaidCard.LostStolenDateTime = null;
-                prepaidCard.MarkedForDeletion = false;
-                prepaidCard.Status = status;
-                prepaidCard.UserCardDesignId = null;
-
-                PrepaidCardAccountUserEntity prepaidCardUser = new PrepaidCardAccountUserEntity();
-                prepaidCardUser.UserId = user.UserID;
-                prepaidCardUser.PrepaidCardAccount = prepaidCard;
-                adapter.SaveEntity(prepaidCardUser);
-            }
-        }
+        }     
+     
         private void CreateCardTransaction(PrepaidCardAccount account, string transactionType, string ref1, string merchantRef, DateTime transactionDate)
         {
 
@@ -191,6 +170,7 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
                 cardTrans.TerminalId = "1234";
                 cardTrans.MerchantRef = merchantRef;
                 cardTrans.MerchantNameAddress = "NAMEADDRESS";
+                cardTrans.PrepaidCardNumber = "1234567891234";
                 cardTrans.PrepaidCardNumber = account.CardNumber;
                 cardTrans.PrepaidCardNumberLastFour = account.CardNumber.Substring(account.CardNumber.Length - 4, 4);
                 // vcReference;
