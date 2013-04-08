@@ -78,15 +78,11 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
             _request.PageNumber = -1;
             var target = new CardTransactionSearchServiceCommand(ProviderFactory);
             var result = target.Execute(_request);
-            Assert.IsNotNull(result.Status);
+            Assert.IsNotNull(result.Status);  
             Assert.IsFalse(result.Status.IsSuccessful);
-            Assert.AreEqual(
-                string.Format(
-                    "PageNumber must >=0{0}Parameter name: request.PageNumber",
-                    Environment.NewLine),
-                result.Status.ErrorMessage);
+            Assert.AreEqual(0, _request.PageNumber);                    
         }
-        
+                    
         [TestMethod]
         public void Execute_Failure_NumberPerPageIsZero()
         {
@@ -95,11 +91,7 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
             var result = target.Execute(_request);
             Assert.IsNotNull(result.Status);
             Assert.IsFalse(result.Status.IsSuccessful);
-            Assert.AreEqual(
-                string.Format(
-                    "NumberPerPage must >=0{0}Parameter name: request.NumberPerPage",
-                    Environment.NewLine),
-                result.Status.ErrorMessage);
+            Assert.AreEqual(0, _request.NumberPerPage);    
         }
 
         [TestMethod]

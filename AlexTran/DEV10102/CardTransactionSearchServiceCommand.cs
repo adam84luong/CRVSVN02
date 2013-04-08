@@ -35,23 +35,28 @@ namespace Payjr.Core.ServiceCommands.Prepaid
         protected override bool OnExecute(RetrieveTransactionResponse response)
         {
                 List<FinancialTransaction> cardTransactions = _prepaidCardAccount.RetrieveTransactions(_startDate, _endDate, _pageNumber, _numberPerPage);
-                foreach (FSVDBTransaction trans in cardTransactions)
+                FSVDBTransaction fsvtrans;
+                foreach (FinancialTransaction trans in cardTransactions)
                     {
-                        response.CardTransactions.Add
-                         (
-                         new CardTransactionRecord
-                         {
-                             ActingUserIdentifier = new Identifiers.UserIdentifier(_prepaidCardAccount.UserID.Value).Identifier,
-                             Amount = trans.Amount,
-                             Date = DateTime.Parse(trans.DateString),
-                             Description = trans.Description,
-                             LongTransactionTypeDescription = trans.LongTransactionTypeDescription,
-                             MerchantCategoryGroup = trans.CardTransaction.Mmc,
-                             RunningBalance = trans.RunningBalance,
-                             ShortTransactionTypeDescription = trans.ShortTransactionTypeDescription,
-                             TransactionNumber = trans.TransactionNumber.Trim()
-                         }
-                         );
+                        fsvtrans = trans as FSVDBTransaction;
+                        if (fsvtrans != null)
+                        {
+                            response.CardTransactions.Add
+                            (
+                            new CardTransactionRecord
+                            {
+                                ActingUserIdentifier = new Identifiers.UserIdentifier(_prepaidCardAccount.UserID.Value).Identifier,
+                                Amount = fsvtrans.Amount,
+                                Date = DateTime.Parse(fsvtrans.DateString),
+                                Description = fsvtrans.Description,
+                                LongTransactionTypeDescription = fsvtrans.LongTransactionTypeDescription,
+                                MerchantCategoryGroup = fsvtrans.CardTransaction.Mmc,
+                                RunningBalance = fsvtrans.RunningBalance,
+                                ShortTransactionTypeDescription = fsvtrans.ShortTransactionTypeDescription,
+                                TransactionNumber = fsvtrans.TransactionNumber.Trim()
+                            }
+                            );
+                        }
                     }
                     response.CardIdentifier = _cardIdentifier;
                     response.TotalTransactions = cardTransactions.Count;                                                
@@ -67,17 +72,18 @@ namespace Payjr.Core.ServiceCommands.Prepaid
             if (string.IsNullOrWhiteSpace(request.CardIdentifier))
             {
                 throw new ArgumentException("CardIdentifier must be set", "request.CardIdentifier");
-            }      
-            _pageNumber = Convert.ToString(request.PageNumber) == string.Empty ? 0 : request.PageNumber;
-            if (request.PageNumber < 0 )
-            {
-                throw new ArgumentException("PageNumber must >=0", "request.PageNumber");
             }
-            _numberPerPage = Convert.ToString(request.NumberPerPage) == string.Empty ? 0 : request.NumberPerPage;
-            if (request.NumberPerPage < 0 )
+
+            if (Convert.ToString(request.PageNumber) == string.Empty || request.PageNumber < 0 || request.PageNumber > Int32.MaxValue)
             {
-                throw new ArgumentException("NumberPerPage must >=0", "request.NumberPerPage");
+                request.PageNumber = 0;                  
             }
+
+            if (Convert.ToString(request.NumberPerPage) == string.Empty || request.NumberPerPage < 0 || request.NumberPerPage > Int32.MaxValue)
+            {
+                request.NumberPerPage = 0;    
+            }
+         
             int _result = DateTime.Compare(request.StartDate, request.EndDate);
             if (_result > 0)
             {
@@ -98,6 +104,8 @@ namespace Payjr.Core.ServiceCommands.Prepaid
             _startDate = request.StartDate;
             _filteredForUserViewing = request.FilteredForUserViewing;
             _includeReplacementCards = request.IncludeReplacementCards;
+            _pageNumber = request.PageNumber;
+            _numberPerPage = request.NumberPerPage;
          
         }
     }

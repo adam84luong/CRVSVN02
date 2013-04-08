@@ -2614,8 +2614,7 @@ namespace Payjr.Util.Test
                 cardTrans.MerchantId = "ID";
                 cardTrans.TerminalId = "1234";
                 cardTrans.MerchantRef = merchantRef;
-                cardTrans.MerchantNameAddress = "NAMEADDRESS";
-                cardTrans.PrepaidCardNumber = "1234567891234";
+                cardTrans.MerchantNameAddress = "NAMEADDRESS";    
                 cardTrans.PrepaidCardNumber = account.CardNumber;
                 cardTrans.PrepaidCardNumberLastFour = account.CardNumber.Substring(account.CardNumber.Length - 4, 4);
                 // vcReference;
