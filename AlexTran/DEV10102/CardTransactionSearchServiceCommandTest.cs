@@ -34,8 +34,8 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
             TestEntityFactory.CreateTeen(_branding, theme, culture, out parent, out teen, true);
             TestEntityFactory.CreatePrepaidModule(_branding.BrandingId);
             TestEntityFactory.CreatePrepaidAccount(teen, true, PrepaidCardStatus.Good);       
-            TestEntityFactory.CreateTransactionLookup("1102", "Short", "Long", true, 0, true);         
-            CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1102", "1", "123", DateTime.Today);
+            TestEntityFactory.CreateTransactionLookup("1102", "Short", "Long", true, 0, true);
+            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1102", "1", "123", DateTime.Today);
            
             _request.CardIdentifier = "PJRPCA:" + teen.FinancialAccounts.ActivePrepaidCardAccount.AccountID.ToString().ToUpper();
             var target = new CardTransactionSearchServiceCommand(ProviderFactory);
@@ -144,42 +144,8 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
             }
 
             return result;
-        }     
-     
-        private void CreateCardTransaction(PrepaidCardAccount account, string transactionType, string ref1, string merchantRef, DateTime transactionDate)
-        {
-
-            using (DataAccessAdapter adapter = new DataAccessAdapter(true))
-            {
-                CardTransactionEntity cardTrans = new CardTransactionEntity();
-
-                //Go get the purse
-                cardTrans.PurseId = null;
-                cardTrans.PrepaidAccountId = account.AccountID;
-                cardTrans.Amount = 2.00M;
-                cardTrans.Fee = 0.00M;
-                cardTrans.TransactionType = transactionType;              
-                cardTrans.TransactionDate = transactionDate;
-                cardTrans.TransactionEntryDate = transactionDate;
-                cardTrans.RunningBalance = 0.00M;             
-                cardTrans.TranId = "123";
-                cardTrans.Ref1 = ref1;
-                cardTrans.Ref2 = "";
-                cardTrans.Mmc = "1234";
-                cardTrans.MerchantId = "ID";
-                cardTrans.TerminalId = "1234";
-                cardTrans.MerchantRef = merchantRef;
-                cardTrans.MerchantNameAddress = "NAMEADDRESS";
-                cardTrans.PrepaidCardNumber = "1234567891234";
-                cardTrans.PrepaidCardNumber = account.CardNumber;
-                cardTrans.PrepaidCardNumberLastFour = account.CardNumber.Substring(account.CardNumber.Length - 4, 4);
-                // vcReference;
-                //FiservID;
-                if (!adapter.SaveEntity(cardTrans))
-                {
-                }
-            }
-        }
+        }         
+    
 
      
         #endregion
