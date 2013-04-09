@@ -20,11 +20,6 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
         [TestInitialize]
         public void InitializeTest()
         {
-             _request = CreateRetrieveTransactionRequest(true);
-        }
-        [TestMethod]
-        public void Execute_Successful()
-        {
             TestEntityFactory.ClearAll();
             Parent parent;
             Teen teen;
@@ -33,16 +28,48 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
             CultureEntity culture = TestEntityFactory.CreateCulture("Culture");
             TestEntityFactory.CreateTeen(_branding, theme, culture, out parent, out teen, true);
             TestEntityFactory.CreatePrepaidModule(_branding.BrandingId);
-            TestEntityFactory.CreatePrepaidAccount(teen, true, PrepaidCardStatus.Good);       
+            TestEntityFactory.CreatePrepaidAccount(teen, true, PrepaidCardStatus.Good);
             TestEntityFactory.CreateTransactionLookup("1102", "Short", "Long", true, 0, true);
-            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1102", "1", "123", DateTime.Today);
-           
+            TestEntityFactory.CreateTransactionLookup("1103", "Short", "Long", true, 0, true);
+            TestEntityFactory.CreateTransactionLookup("1105", "Short", "Long", true, 0, true);
+            TestEntityFactory.CreateTransactionLookup("9999", "Short", "Long", true, 0, false);
+
+            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1102", "1", "1231", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1103", "1", "1232", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1105", "1", "1233", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "9999", "1", "1234", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1102", "2", "1235", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1102", "2", "1236", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1103", "3", "1237", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1105", "3", "1238", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1102", "4", "1239", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1103", "4", "12310", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1103", "5", "12311", DateTime.Today.AddDays(2));
+            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1103", "6", "12312", DateTime.Today.AddDays(-2));
+      
+            _request = CreateRetrieveTransactionRequest(true);
             _request.CardIdentifier = "PJRPCA:" + teen.FinancialAccounts.ActivePrepaidCardAccount.AccountID.ToString().ToUpper();
+      
+        }
+        [TestMethod]
+        public void Execute_Successful_NoPaging()
+        {
             var target = new CardTransactionSearchServiceCommand(ProviderFactory);
             var result = target.Execute(_request);
             Assert.IsNotNull(result.Status);
             Assert.IsTrue(result.Status.IsSuccessful);
-            Assert.AreEqual(1, result.CardTransactions.Count);        
+            Assert.AreEqual(5, result.CardTransactions.Count);        
+        }
+          [TestMethod]
+        public void Execute_Successful_paging()
+        {
+            _request.PageNumber = 2;
+            _request.NumberPerPage = 2;
+            var target = new CardTransactionSearchServiceCommand(ProviderFactory);
+            var result = target.Execute(_request);
+            Assert.IsNotNull(result.Status);
+            Assert.IsTrue(result.Status.IsSuccessful);
+            Assert.AreEqual(2, result.CardTransactions.Count);
         }
         [TestMethod]
         public void Execute_Failure_RequestIsNull()
@@ -73,25 +100,25 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
         }
 
         [TestMethod]
-        public void Execute_Failure_PageNumberIsZero()
+        public void Execute_Failure_PageNumberIsLessThanZero()
         {
             _request.PageNumber = -1;
             var target = new CardTransactionSearchServiceCommand(ProviderFactory);
             var result = target.Execute(_request);
-            Assert.IsNotNull(result.Status);  
-            Assert.IsFalse(result.Status.IsSuccessful);
-            Assert.AreEqual(0, _request.PageNumber);                    
+            Assert.IsNotNull(result.Status);
+            Assert.IsTrue(result.Status.IsSuccessful);
+            Assert.AreEqual(5, result.CardTransactions.Count);                          
         }
                     
         [TestMethod]
-        public void Execute_Failure_NumberPerPageIsZero()
+        public void Execute_Failure_NumberPerPageIsLessThanZero()
         {
             _request.NumberPerPage = -1;
             var target = new CardTransactionSearchServiceCommand(ProviderFactory);
             var result = target.Execute(_request);
             Assert.IsNotNull(result.Status);
-            Assert.IsFalse(result.Status.IsSuccessful);
-            Assert.AreEqual(0, _request.NumberPerPage);    
+            Assert.IsTrue(result.Status.IsSuccessful);
+            Assert.AreEqual(5, result.CardTransactions.Count);                 
         }
 
         [TestMethod]

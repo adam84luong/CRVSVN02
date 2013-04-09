@@ -2606,7 +2606,7 @@ namespace Payjr.Util.Test
                 cardTrans.TransactionType = transactionType;
                 cardTrans.TransactionDate = transactionDate;
                 cardTrans.TransactionEntryDate = transactionDate;
-                cardTrans.RunningBalance = 0.00M;
+                cardTrans.RunningBalance = 0.02M;
                 cardTrans.TranId = "123";
                 cardTrans.Ref1 = ref1;
                 cardTrans.Ref2 = "";
@@ -2617,8 +2617,6 @@ namespace Payjr.Util.Test
                 cardTrans.MerchantNameAddress = "NAMEADDRESS";    
                 cardTrans.PrepaidCardNumber = account.CardNumber;
                 cardTrans.PrepaidCardNumberLastFour = account.CardNumber.Substring(account.CardNumber.Length - 4, 4);
-                // vcReference;
-                //FiservID;
                 if (!adapter.SaveEntity(cardTrans))
                 {
                    

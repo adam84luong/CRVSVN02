@@ -21,9 +21,7 @@ namespace Payjr.Core.ServiceCommands.Prepaid
     public class CardTransactionSearchServiceCommand : ProviderServiceCommandBase<RetrieveTransactionRequest, RetrieveTransactionResponse>
     {
         private string _cardIdentifier;
-        private DateTime _endDate;
-        private bool _filteredForUserViewing;
-        private bool _includeReplacementCards;
+        private DateTime _endDate;   
         public int _numberPerPage;
         public int _pageNumber;
         private DateTime _startDate;
@@ -73,15 +71,15 @@ namespace Payjr.Core.ServiceCommands.Prepaid
             {
                 throw new ArgumentException("CardIdentifier must be set", "request.CardIdentifier");
             }
-
-            if (Convert.ToString(request.PageNumber) == string.Empty || request.PageNumber < 0 || request.PageNumber > Int32.MaxValue)
+            _pageNumber = request.PageNumber;
+            if (_pageNumber < 0 || _pageNumber > Int32.MaxValue)
             {
-                request.PageNumber = 0;                  
+                _pageNumber = 0;                  
             }
-
-            if (Convert.ToString(request.NumberPerPage) == string.Empty || request.NumberPerPage < 0 || request.NumberPerPage > Int32.MaxValue)
+            _numberPerPage = request.NumberPerPage;
+            if (_numberPerPage < 0 || _numberPerPage > Int32.MaxValue)
             {
-                request.NumberPerPage = 0;    
+                _numberPerPage = 0;    
             }
          
             int _result = DateTime.Compare(request.StartDate, request.EndDate);
@@ -101,11 +99,7 @@ namespace Payjr.Core.ServiceCommands.Prepaid
 
             _cardIdentifier = request.CardIdentifier;
             _endDate = request.EndDate;
-            _startDate = request.StartDate;
-            _filteredForUserViewing = request.FilteredForUserViewing;
-            _includeReplacementCards = request.IncludeReplacementCards;
-            _pageNumber = request.PageNumber;
-            _numberPerPage = request.NumberPerPage;
+            _startDate = request.StartDate;        
          
         }
     }
