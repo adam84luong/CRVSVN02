@@ -72,12 +72,12 @@ namespace Payjr.Core.ServiceCommands.Prepaid
                 throw new ArgumentException("CardIdentifier must be set", "request.CardIdentifier");
             }
             _pageNumber = request.PageNumber;
-            if (_pageNumber < 0 || _pageNumber > Int32.MaxValue)
+            if (_pageNumber < 0)
             {
                 _pageNumber = 0;                  
             }
             _numberPerPage = request.NumberPerPage;
-            if (_numberPerPage < 0 || _numberPerPage > Int32.MaxValue)
+            if (_numberPerPage < 0)
             {
                 _numberPerPage = 0;    
             }

@@ -19,36 +19,31 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
         private RetrieveTransactionRequest _request;
         [TestInitialize]
         public void InitializeTest()
-        {
-            TestEntityFactory.ClearAll();
-            Parent parent;
-            Teen teen;
-            _branding = TestEntityFactory.CreateBranding("Giftcardlab");
-            ThemeEntity theme = TestEntityFactory.CreateTheme("Buxx");
-            CultureEntity culture = TestEntityFactory.CreateCulture("Culture");
-            TestEntityFactory.CreateTeen(_branding, theme, culture, out parent, out teen, true);
+        {           
+            base.MyTestInitialize();
+         
             TestEntityFactory.CreatePrepaidModule(_branding.BrandingId);
-            TestEntityFactory.CreatePrepaidAccount(teen, true, PrepaidCardStatus.Good);
+            TestEntityFactory.CreatePrepaidAccount(_teen, true, PrepaidCardStatus.Good);
             TestEntityFactory.CreateTransactionLookup("1102", "Short", "Long", true, 0, true);
             TestEntityFactory.CreateTransactionLookup("1103", "Short", "Long", true, 0, true);
             TestEntityFactory.CreateTransactionLookup("1105", "Short", "Long", true, 0, true);
             TestEntityFactory.CreateTransactionLookup("9999", "Short", "Long", true, 0, false);
 
-            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1102", "1", "1231", DateTime.Today);
-            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1103", "1", "1232", DateTime.Today);
-            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1105", "1", "1233", DateTime.Today);
-            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "9999", "1", "1234", DateTime.Today);
-            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1102", "2", "1235", DateTime.Today);
-            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1102", "2", "1236", DateTime.Today);
-            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1103", "3", "1237", DateTime.Today);
-            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1105", "3", "1238", DateTime.Today);
-            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1102", "4", "1239", DateTime.Today);
-            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1103", "4", "12310", DateTime.Today);
-            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1103", "5", "12311", DateTime.Today.AddDays(2));
-            TestEntityFactory.CreateCardTransaction(teen.FinancialAccounts.ActivePrepaidCardAccount, "1103", "6", "12312", DateTime.Today.AddDays(-2));
+            TestEntityFactory.CreateCardTransaction(_teen.FinancialAccounts.ActivePrepaidCardAccount, "1102", "1", "1231", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(_teen.FinancialAccounts.ActivePrepaidCardAccount, "1103", "1", "1232", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(_teen.FinancialAccounts.ActivePrepaidCardAccount, "1105", "1", "1233", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(_teen.FinancialAccounts.ActivePrepaidCardAccount, "9999", "1", "1234", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(_teen.FinancialAccounts.ActivePrepaidCardAccount, "1102", "2", "1235", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(_teen.FinancialAccounts.ActivePrepaidCardAccount, "1102", "2", "1236", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(_teen.FinancialAccounts.ActivePrepaidCardAccount, "1103", "3", "1237", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(_teen.FinancialAccounts.ActivePrepaidCardAccount, "1105", "3", "1238", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(_teen.FinancialAccounts.ActivePrepaidCardAccount, "1102", "4", "1239", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(_teen.FinancialAccounts.ActivePrepaidCardAccount, "1103", "4", "12310", DateTime.Today);
+            TestEntityFactory.CreateCardTransaction(_teen.FinancialAccounts.ActivePrepaidCardAccount, "1103", "5", "12311", DateTime.Today.AddDays(2));
+            TestEntityFactory.CreateCardTransaction(_teen.FinancialAccounts.ActivePrepaidCardAccount, "1103", "6", "12312", DateTime.Today.AddDays(-2));
       
             _request = CreateRetrieveTransactionRequest(true);
-            _request.CardIdentifier = "PJRPCA:" + teen.FinancialAccounts.ActivePrepaidCardAccount.AccountID.ToString().ToUpper();
+            _request.CardIdentifier = "PJRPCA:" + _teen.FinancialAccounts.ActivePrepaidCardAccount.AccountID.ToString().ToUpper();
       
         }
         [TestMethod]

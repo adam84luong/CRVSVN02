@@ -2606,7 +2606,7 @@ namespace Payjr.Util.Test
                 cardTrans.TransactionType = transactionType;
                 cardTrans.TransactionDate = transactionDate;
                 cardTrans.TransactionEntryDate = transactionDate;
-                cardTrans.RunningBalance = 0.02M;
+                cardTrans.RunningBalance = 0.00M;
                 cardTrans.TranId = "123";
                 cardTrans.Ref1 = ref1;
                 cardTrans.Ref2 = "";
