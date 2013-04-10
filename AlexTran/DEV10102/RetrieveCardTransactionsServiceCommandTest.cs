@@ -78,7 +78,19 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
                 string.Format("request must be set{0}Parameter name: request", Environment.NewLine),
                 result.Status.ErrorMessage);
         }
-     
+
+        [TestMethod]
+        public void Execute_Failure_CardIdentifierIsNull()
+        {
+            _request.CardIdentifier = string.Empty;
+            var target = new RetrieveCardTransactionsServiceCommand(ProviderFactory);
+            var result = target.Execute(_request);
+            Assert.IsNotNull(result.Status);
+            Assert.IsFalse(result.Status.IsSuccessful);
+            Assert.AreEqual(
+                string.Format("CardIdentifier must be set{0}Parameter name: request.CardIdentifier", Environment.NewLine),
+                result.Status.ErrorMessage);
+        }
         [TestMethod]
         public void Execute_Failure_PrepaidCardAccountIsNull()
         {
