@@ -1,4 +1,5 @@
-﻿using Common.Contracts.Prepaid.Records;
+﻿using Common.Business.Validation;
+using Common.Contracts.Prepaid.Records;
 using Common.Contracts.Prepaid.Requests;
 using Common.Contracts.Prepaid.Responses;
 using Common.Contracts.Shared.Records;
@@ -87,15 +88,15 @@ namespace Payjr.Core.ServiceCommands.Prepaid
             {
                 throw new ArgumentException("StartDate must earlier than is EndDate", "request.StartDate, request.EndDate");
             }
-            try
-            {
-                Guid _prepaidCardID = new Identifiers.PrepaidCardAccountIdentifier(request.CardIdentifier).PersistableID;
-                _prepaidCardAccount = PrepaidCardAccount.RetrievePrepaidCardAccountByID(_prepaidCardID);
-             }
-            catch 
-            {
-                throw new Exception(string.Format("Could not found a CardTransaction with CardIdentifier = {0}", request.CardIdentifier));
-             }
+            Guid _prepaidCardID = new Identifiers.PrepaidCardAccountIdentifier(request.CardIdentifier).PersistableID;
+            _prepaidCardAccount = PrepaidCardAccount.RetrievePrepaidCardAccountByID(_prepaidCardID);
+            if (_prepaidCardAccount == null)
+               {
+               throw new ValidationException(
+                            string.Format(
+                                "Could not found a CardTransaction with CardIdentifier = {0}",
+                                request.CardIdentifier));
+               }  
 
             _cardIdentifier = request.CardIdentifier;
             _endDate = request.EndDate;

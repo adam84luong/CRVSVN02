@@ -1858,7 +1858,7 @@ namespace Payjr.Core.FinancialAccounts
         public static PrepaidCardAccount RetrievePrepaidCardAccountByID(Guid accountID)
         {
             User owningUser = User.RetrieveUserByPrepaidCardAccountID(accountID);
-            return owningUser.FinancialAccounts.GetAccountByID(accountID) as PrepaidCardAccount;
+            return owningUser== null ? null : owningUser.FinancialAccounts.GetAccountByID(accountID) as PrepaidCardAccount;
         }
 
         #endregion
