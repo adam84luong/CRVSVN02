@@ -101,7 +101,7 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
             Assert.IsFalse(result.Status.IsSuccessful);
             Assert.AreEqual(
              string.Format(
-                 "Could not found a CardTransaction with CardIdentifier = {0}",
+                 "Could not found a PrepaidCard with CardIdentifier = {0}",
                  _request.CardIdentifier),
              result.Status.ErrorMessage);        
         }

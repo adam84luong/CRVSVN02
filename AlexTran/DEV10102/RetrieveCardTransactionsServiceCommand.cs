@@ -88,13 +88,13 @@ namespace Payjr.Core.ServiceCommands.Prepaid
             {
                 throw new ArgumentException("StartDate must earlier than is EndDate", "request.StartDate, request.EndDate");
             }
-            Guid _prepaidCardID = new Identifiers.PrepaidCardAccountIdentifier(request.CardIdentifier).PersistableID;
-            _prepaidCardAccount = PrepaidCardAccount.RetrievePrepaidCardAccountByID(_prepaidCardID);
+            Guid prepaidCardID = new Identifiers.PrepaidCardAccountIdentifier(request.CardIdentifier).PersistableID;
+            _prepaidCardAccount = PrepaidCardAccount.RetrievePrepaidCardAccountByID(prepaidCardID);
             if (_prepaidCardAccount == null)
                {
                throw new ValidationException(
                             string.Format(
-                                "Could not found a CardTransaction with CardIdentifier = {0}",
+                                "Could not found a PrepaidCard with CardIdentifier = {0}",
                                 request.CardIdentifier));
                }  
 
