@@ -4,3 +4,29 @@
 
 Co the tham khao unit test o duong dan ben duoi de hieu them nghiep vu, search theo tu khoa "VerifyAccount"
 \Payjr\main\PayJr\Payjr.Core.Test\FinancialAccountTest\PrepaidCardAccountTest.cs
+
+==============
+Create request for test
+==============
+
+private CardActivationRequest CreateCardActivationRequest()
+{
+	var result = new CardActivationRequest
+	{
+		Header = new RequestHeaderRecord // not required
+		{
+			CallerName = "Unittest"
+		}
+	};
+
+	result.CardActivations.Add(
+		new CardActivationRequestRecord
+		{
+			ActivatingUserIdentifier =
+			new UserIdentifier(_parent.UserID).Identifier,
+			ActivationData = _parent.DOB.Value.ToString(),
+			CardIdentifier = "CardIdentifier" // need to update to appropriate identifier
+		});
+	
+	return result;
+}
