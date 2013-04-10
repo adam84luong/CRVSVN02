@@ -49,7 +49,7 @@ namespace Payjr.Services
 
         public RetrieveTransactionResponse CardTransactionSearch(RetrievalConfigurationRecord retrievalConfiguration, RetrieveTransactionRequest request)
         {
-            return new CardTransactionSearchServiceCommand(_providers).Execute(request);
+            return new RetrieveCardTransactionsServiceCommand(_providers).Execute(request);
         }
 
         public void ChangeUserInfo(RetrievalConfigurationRecord retrievalConfiguration, UpdateUserDetailRequest request)
