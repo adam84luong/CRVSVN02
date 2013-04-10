@@ -18,31 +18,30 @@ namespace Payjr.Core.ServiceCommands.PrepaidCard
     public class CardActivationServiceCommand : ProviderServiceCommandBase<CardActivationRequest, CardActivationResponse>
     {
         public CardActivationServiceCommand(IProviderFactory providers) : base(providers) { }
-        private ICardProvider _cardProvider;
-        private CardActivationRecord cardActivationRecord;
-        private PrepaidCardAccount prepaidCardAcount;
-        private Guid _prepaidCardID;
-        private AccountDetail accountDetail;
-        List<CardActivationRequestRecord> CardActivationRequestRecord;
-        private Parent parent;
+        private PrepaidCardAccount prepaidCardAcount;    
+        List<CardActivationRequestRecord> CardActivationRequestRecord;    
         
         protected override bool OnExecute(CardActivationResponse response)
         {           
- 
+            
             foreach (CardActivationRequestRecord cardActivation in CardActivationRequestRecord)
-            {                       
-             // List<FinancialTransaction> retrieveTransactions = prepaidCardAcount.RetrieveTransactions();
-               
-                VerificationData verificationData = new VerificationData(parent.DOB);                
-                response.CardActivations.Add
-                (
-                    new CardActivationRecord
-                    {
-                        ActingUserIdentifier = cardActivation.ActivatingUserIdentifier,
-                        ActivationSuccessful = prepaidCardAcount.VerifyAccount(verificationData, null, null, null),
-                        CardIdentifier = prepaidCardAcount.CardNumber
-                    }
-                );
+            {                          
+                Guid userID = new UserIdentifier(cardActivation.ActivatingUserIdentifier).ID;
+                Parent parent = User.RetrieveUser(userID) as Parent;
+                VerificationData verificationData = new VerificationData(parent.DOB.Value);
+                if (verificationData != null)
+                {
+                    response.CardActivations.Add
+                    (
+                        new CardActivationRecord
+                        {
+                            
+                            ActingUserIdentifier = cardActivation.ActivatingUserIdentifier,
+                            ActivationSuccessful = prepaidCardAcount.VerifyAccount(verificationData, null, null, null),
+                            CardIdentifier = prepaidCardAcount.CardIdentifier.ToString()
+                        }
+                    );
+                }
             }
             return true;
         }
@@ -60,38 +59,43 @@ namespace Payjr.Core.ServiceCommands.PrepaidCard
                 throw new ArgumentException("cardActivationRecords must be set", "request.cardActivationRecords");
             }
             var cardActivationRecord = cardActivationRecords[0];
-
-            var _userIdentifier = cardActivationRecord.ActivatingUserIdentifier;
-            if(string.IsNullOrWhiteSpace(_userIdentifier))
+            
+            if (string.IsNullOrWhiteSpace(cardActivationRecord.ActivatingUserIdentifier))
             {
                 throw new ArgumentException("UserIdentifier must be set", "request.AddCardsRecord[0].UserIdentifier");
             }
-            var dataAcive = cardActivationRecord.ActivationData;
-            if(string.IsNullOrWhiteSpace(dataAcive))
+            if(string.IsNullOrWhiteSpace(cardActivationRecord.ActivationData))
             {
-                throw new ArgumentException("dataAcive must be set", "request");
+                throw new ArgumentException("ActivationData must be set", "request");
             }
-            var cardIdentifier = prepaidCardAcount.CardNumber;
-            if(string.IsNullOrWhiteSpace(cardIdentifier))
+           
+            var cardIdentifier = cardActivationRecord.CardIdentifier;//Validate cho thang nay
+            if (string.IsNullOrWhiteSpace(cardActivationRecord.CardIdentifier))
             {
-                throw new ArgumentException("CardNumber must be set", "request");
+                throw new ArgumentException("CardIdentifier must be set", "request");
             }
-            var ipAddress = cardActivationRecord.IPAddress;
-            if(string.IsNullOrWhiteSpace(ipAddress))
+            //
+            if(string.IsNullOrWhiteSpace(cardActivationRecord.IPAddress))
             {
                 throw new ArgumentException("ipAddress must be set", "request");
             }
             try
             {
-                _prepaidCardID = new Identifiers.PrepaidCardAccountIdentifier(cardIdentifier).PersistableID;
+                Guid _prepaidCardID = new Identifiers.PrepaidCardAccountIdentifier(cardIdentifier).PersistableID;
                 prepaidCardAcount = PrepaidCardAccount.RetrievePrepaidCardAccountByID(_prepaidCardID);
-                
-            }
+            }           
+        
             catch
             {
                 throw new Exception(string.Format("Could not found a CardActivation with CardIdentifier = {0}",cardIdentifier));
             }
-            CardActivationRequestRecord = request.CardActivations; 
+              if (string.IsNullOrWhiteSpace(prepaidCardAcount.CardNumber))
+                {
+                    throw new Exception(string.Format("Could not found a CardActivation with CardIdentifier = {0}", cardIdentifier));
+       
+                }
+                CardActivationRequestRecord = request.CardActivations; 
+         
         }
     }
 }
