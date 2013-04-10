@@ -30,3 +30,10 @@ private CardActivationRequest CreateCardActivationRequest()
 	
 	return result;
 }
+
+========
+Create PrepaidCardAccount for test
+===================================
+TestEntityFactory.CreatePrepaidAccount(_teen, false, PrepaidCardStatus.Pending);
+để lấy ID của card này:
+var pcaID =_teen.FinancialAccounts.PrepaidCardAccounts[0].AccountID;
