@@ -27,83 +27,104 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
     [TestClass]
     public class GetCardDetailsServiceCommandTest : TestBase
     {
+        private PrepaidCardSearchRequest _request;      
         private MockRepository _mocks;
         private TestProviderFactory _providers;
         private BrandingEntity _branding;
+        private Parent _parent;
+        private Teen _teen;
+        private ThemeEntity _theme;
+        private CultureEntity _culture;
 
         [TestInitialize]
         public void InitializeTest()
         {
+            TestEntityFactory.ClearAll();          
+            _branding = TestEntityFactory.CreateBranding("Giftcardlab");
+            _theme = TestEntityFactory.CreateTheme("Buxx");
+            _culture = TestEntityFactory.CreateCulture("Culture");
+            TestEntityFactory.CreateTeen(_branding, _theme, _culture, out _parent, out _teen, true);
+            TestEntityFactory.CreatePrepaidModule(_branding.BrandingId);
             _mocks = new MockRepository(MockBehavior.Default);
             _providers = new TestProviderFactory(_mocks);
+            _request = CreatePrepaidCardSearchRequest(true);   
         }
 
-        [TestMethod]
-        
-        public void ExecuteTestSucess()
-        {
-            TestEntityFactory.ClearAll();
-            Parent parent;
-            Teen teen;
-            _branding = TestEntityFactory.CreateBranding("Giftcardlab");
-            ThemeEntity theme = TestEntityFactory.CreateTheme("Buxx");
-            CultureEntity culture = TestEntityFactory.CreateCulture("Culture");
-            TestEntityFactory.CreateTeen(_branding, theme, culture, out parent, out teen, true);
-            TestEntityFactory.CreatePrepaidModule(_branding.BrandingId);
-            CreatePrepaidAccount(teen, true, PrepaidCardStatus.Good);
-
+        [TestMethod]        
+        public void ExecuteTestSucess_SearchByUserIdentifier()
+        {    
+            TestEntityFactory.CreatePrepaidAccount(_teen, true, PrepaidCardStatus.Good);
             CardHolderResponse cardHolderResponse = new CardHolderResponse("123", "Message",
                                                                            "<CardHolderInfo> <CardInfo Card= \"4315830000002628\" nbATTMID=\"2853186\" ReferredBy= \"2459883\" Company= \"2459883\" RegistrationDate= \"09/02/2005\" LastUpdate= \"09/16/2005\" LastName= \"Urban\" FirstName= \"John1\" MiddleName= \"\" Title= \"Coder\" LastName2= \"\" FirstName2= \"\" MiddleName2= \"\" AddrLine1= \"3410 W. Atlanta St.\" AddrLine2= \"\" City= \"Broken Arrow\" State= \"OK\" Country= \"US\" PostalCode= \"74012\" BirthDate= \"12/27/1967\" SSN= \"123121234\" MatriculaNumber= \"1234\" DriverLicense= \"01829304\" DLState= \"OK\" Email= \"jurban@gtplimited.com\" HomePhone= \"9183938393\" OfficePhone= \"\" MobilePhone= \"\" FaxPhone= \"\" ChallengeID= \"1000\" LicenseID= \"393709\" Subcompany= \"2459883\" Status= \"PA\" ExpirationDate=\"08/31/2008\" CardType= \"\" OtherCompanyName= \"\" PictureID= \"\" /></CardHolderInfo>");
-
             var fsvWebServiceMock = new Mock<IFsvWebService>();
             Balance balanceResponse = new Balance("1", @"Success", "100", "100","100","100");
             fsvWebServiceMock.Setup(x => x.GetCHInformation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(cardHolderResponse);
             fsvWebServiceMock.Setup(x => x.PrepaidCardBalanceInquiry(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(balanceResponse);
             
             IFsvWebService _interface = fsvWebServiceMock.Object;
-            FSVBankFirstCardProvider provider = new FSVBankFirstCardProvider(GetProviderEntity(), teen, _interface);
-            
-            // create request
-            var request = new PrepaidCardSearchRequest();
-            request.Configuration = new RetrievalConfigurationRecord()
-                                        {
-                                            ApplicationKey = Guid.NewGuid()
-                                        };
-            var prepaidCardSearch = new PrepaidCardSearchCriteria();
-            prepaidCardSearch.FirstName = teen.FirstName;
-            prepaidCardSearch.LastName = teen.LastName;
-            prepaidCardSearch.UserIdentifier = new Identifiers.UserIdentifier(teen.UserID).Identifier;
-            prepaidCardSearch.AddressLine1 = teen.Address1;
-            prepaidCardSearch.AddressLine2 = teen.Address2;
+            FSVBankFirstCardProvider provider = new FSVBankFirstCardProvider(GetProviderEntity(), _teen, _interface);
 
-            request.Requests.Add(prepaidCardSearch);
-
+            _request.Requests[0].UserIdentifier = new Identifiers.UserIdentifier(_teen.UserID).Identifier;        
             var target = new GetCardDetailsServiceCommand(_providers);
             target.CardProvider = provider;
-            var result = target.Execute(request);
-
+            var result = target.Execute(_request);
             Assert.IsNotNull(result);
             Assert.AreEqual(1, result.Records.Count);            
             Assert.AreEqual(100, result.Records[0].CardBalance);
-            Assert.AreEqual(teen.FirstName, result.Records[0].CardHolder.FirstName);
+            Assert.AreEqual(_teen.FirstName, result.Records[0].CardHolder.FirstName);
             Assert.AreEqual(PrepaidCardStatus2.Activated, result.Records[0].CardStatus2);
         }
+        [TestMethod]
+        public void ExecuteTestSucess_SearchByPrepaidCardIdentifier()
+        {
+            TestEntityFactory.CreatePrepaidAccount(_teen, true, PrepaidCardStatus.Good);
+            CardHolderResponse cardHolderResponse = new CardHolderResponse("123", "Message",
+                                                                           "<CardHolderInfo> <CardInfo Card= \"4315830000002628\" nbATTMID=\"2853186\" ReferredBy= \"2459883\" Company= \"2459883\" RegistrationDate= \"09/02/2005\" LastUpdate= \"09/16/2005\" LastName= \"Urban\" FirstName= \"John1\" MiddleName= \"\" Title= \"Coder\" LastName2= \"\" FirstName2= \"\" MiddleName2= \"\" AddrLine1= \"3410 W. Atlanta St.\" AddrLine2= \"\" City= \"Broken Arrow\" State= \"OK\" Country= \"US\" PostalCode= \"74012\" BirthDate= \"12/27/1967\" SSN= \"123121234\" MatriculaNumber= \"1234\" DriverLicense= \"01829304\" DLState= \"OK\" Email= \"jurban@gtplimited.com\" HomePhone= \"9183938393\" OfficePhone= \"\" MobilePhone= \"\" FaxPhone= \"\" ChallengeID= \"1000\" LicenseID= \"393709\" Subcompany= \"2459883\" Status= \"PA\" ExpirationDate=\"08/31/2008\" CardType= \"\" OtherCompanyName= \"\" PictureID= \"\" /></CardHolderInfo>");
+            var fsvWebServiceMock = new Mock<IFsvWebService>();
+            Balance balanceResponse = new Balance("1", @"Success", "100", "100", "100", "100");
+            fsvWebServiceMock.Setup(x => x.GetCHInformation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(cardHolderResponse);
+            fsvWebServiceMock.Setup(x => x.PrepaidCardBalanceInquiry(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(balanceResponse);
+            IFsvWebService _interface = fsvWebServiceMock.Object;
+            FSVBankFirstCardProvider provider = new FSVBankFirstCardProvider(GetProviderEntity(), _teen, _interface);
 
+            _request.Requests[0].PrepaidCardIdentifier = "PJRPCA:" + _teen.FinancialAccounts.ActivePrepaidCardAccount.AccountID.ToString().ToUpper();
+            var target = new GetCardDetailsServiceCommand(_providers);
+            target.CardProvider = provider;
+            var result = target.Execute(_request);
+            Assert.IsNotNull(result);
+            Assert.AreEqual(1, result.Records.Count);
+            Assert.AreEqual(100, result.Records[0].CardBalance);
+            Assert.AreEqual(_teen.FirstName, result.Records[0].CardHolder.FirstName);
+            Assert.AreEqual(PrepaidCardStatus2.Activated, result.Records[0].CardStatus2);
+        }
+        [TestMethod]
+        public void ExecuteTestSucess_SearchByCardNumber()
+        {
+           TestEntityFactory.CreatePrepaidAccount(_teen, true, PrepaidCardStatus.Good);
+            CardHolderResponse cardHolderResponse = new CardHolderResponse("123", "Message",
+                                                                           "<CardHolderInfo> <CardInfo Card= \"4315830000002628\" nbATTMID=\"2853186\" ReferredBy= \"2459883\" Company= \"2459883\" RegistrationDate= \"09/02/2005\" LastUpdate= \"09/16/2005\" LastName= \"Urban\" FirstName= \"John1\" MiddleName= \"\" Title= \"Coder\" LastName2= \"\" FirstName2= \"\" MiddleName2= \"\" AddrLine1= \"3410 W. Atlanta St.\" AddrLine2= \"\" City= \"Broken Arrow\" State= \"OK\" Country= \"US\" PostalCode= \"74012\" BirthDate= \"12/27/1967\" SSN= \"123121234\" MatriculaNumber= \"1234\" DriverLicense= \"01829304\" DLState= \"OK\" Email= \"jurban@gtplimited.com\" HomePhone= \"9183938393\" OfficePhone= \"\" MobilePhone= \"\" FaxPhone= \"\" ChallengeID= \"1000\" LicenseID= \"393709\" Subcompany= \"2459883\" Status= \"PA\" ExpirationDate=\"08/31/2008\" CardType= \"\" OtherCompanyName= \"\" PictureID= \"\" /></CardHolderInfo>");
+            var fsvWebServiceMock = new Mock<IFsvWebService>();
+            Balance balanceResponse = new Balance("1", @"Success", "100", "100", "100", "100");
+            fsvWebServiceMock.Setup(x => x.GetCHInformation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(cardHolderResponse);
+            fsvWebServiceMock.Setup(x => x.PrepaidCardBalanceInquiry(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(balanceResponse);
+            IFsvWebService _interface = fsvWebServiceMock.Object;
+            FSVBankFirstCardProvider provider = new FSVBankFirstCardProvider(GetProviderEntity(), _teen, _interface);
+      
+            _request.Requests[0].CardNumberFull = "5150620000973224";
+            var target = new GetCardDetailsServiceCommand(_providers);
+            target.CardProvider = provider;
+            var result = target.Execute(_request);
+            Assert.IsNotNull(result);
+            Assert.AreEqual(1, result.Records.Count);
+            Assert.AreEqual(100, result.Records[0].CardBalance);
+            Assert.AreEqual(_teen.FirstName, result.Records[0].CardHolder.FirstName);
+            Assert.AreEqual(PrepaidCardStatus2.Activated, result.Records[0].CardStatus2);
+        }
         [TestMethod]
         public void ExecuteTestFail_PrepaidCardNotFound()
         {
-            TestEntityFactory.ClearAll();
-            Parent parent;
-            Teen teen;
-            _branding = TestEntityFactory.CreateBranding("Giftcardlab");
-            ThemeEntity theme = TestEntityFactory.CreateTheme("Buxx");
-            CultureEntity culture = TestEntityFactory.CreateCulture("Culture");
-            TestEntityFactory.CreateTeen(_branding, theme, culture, out parent, out teen, true);
-            TestEntityFactory.CreatePrepaidModule(_branding.BrandingId);
-            
-            CardHolderResponse cardHolderResponse = new CardHolderResponse("123", "Message",
+           CardHolderResponse cardHolderResponse = new CardHolderResponse("123", "Message",
                                                                            "<CardHolderInfo> <CardInfo Card= \"4315830000002628\" nbATTMID=\"2853186\" ReferredBy= \"2459883\" Company= \"2459883\" RegistrationDate= \"09/02/2005\" LastUpdate= \"09/16/2005\" LastName= \"Urban\" FirstName= \"John1\" MiddleName= \"\" Title= \"Coder\" LastName2= \"\" FirstName2= \"\" MiddleName2= \"\" AddrLine1= \"3410 W. Atlanta St.\" AddrLine2= \"\" City= \"Broken Arrow\" State= \"OK\" Country= \"US\" PostalCode= \"74012\" BirthDate= \"12/27/1967\" SSN= \"123121234\" MatriculaNumber= \"1234\" DriverLicense= \"01829304\" DLState= \"OK\" Email= \"jurban@gtplimited.com\" HomePhone= \"9183938393\" OfficePhone= \"\" MobilePhone= \"\" FaxPhone= \"\" ChallengeID= \"1000\" LicenseID= \"393709\" Subcompany= \"2459883\" Status= \"PA\" ExpirationDate=\"08/31/2008\" CardType= \"\" OtherCompanyName= \"\" PictureID= \"\" /></CardHolderInfo>");
-
             var fsvWebServiceMock = new Mock<IFsvWebService>();
             Balance balanceResponse = new Balance("1", @"Success", "100", "100","100","100");
             fsvWebServiceMock.Setup(
@@ -115,26 +136,12 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
                 x.PrepaidCardBalanceInquiry(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                                    It.IsAny<string>())).Returns(balanceResponse);
             IFsvWebService _interface = fsvWebServiceMock.Object;
-            FSVBankFirstCardProvider provider = new FSVBankFirstCardProvider(GetProviderEntity(), teen, _interface);
-            
-            // create request
-            var request = new PrepaidCardSearchRequest();
-            request.Configuration = new RetrievalConfigurationRecord()
-                                        {
-                                            ApplicationKey = Guid.NewGuid()
-                                        };
-            var prepaidCardSearch = new PrepaidCardSearchCriteria();
-            prepaidCardSearch.FirstName = teen.FirstName;
-            prepaidCardSearch.LastName = teen.LastName;
-            prepaidCardSearch.UserIdentifier = new Identifiers.UserIdentifier(teen.UserID).Identifier;
-            prepaidCardSearch.AddressLine1 = teen.Address1;
-            prepaidCardSearch.AddressLine2 = teen.Address2;
+            FSVBankFirstCardProvider provider = new FSVBankFirstCardProvider(GetProviderEntity(), _teen, _interface);
 
-            request.Requests.Add(prepaidCardSearch);
+            _request.Requests[0].UserIdentifier = new Identifiers.UserIdentifier(_teen.UserID).Identifier;
             var target = new GetCardDetailsServiceCommand(_providers);
             target.CardProvider = provider;
-            var result = target.Execute(request);
-
+            var result = target.Execute(_request);
             Assert.IsNotNull(result);           
             Assert.AreEqual(0, result.Records.Count);
         }
@@ -142,50 +149,51 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
         [TestMethod]
         public void ExecuteTestFail_TeenNotFound()
         {
-            TestEntityFactory.ClearAll();
-            Parent parent;
-            Teen teen;
-            _branding = TestEntityFactory.CreateBranding("Giftcardlab");
-            ThemeEntity theme = TestEntityFactory.CreateTheme("Buxx");
-            CultureEntity culture = TestEntityFactory.CreateCulture("Culture");
-            TestEntityFactory.CreateTeen(_branding, theme, culture, out parent, out teen, true);
-            TestEntityFactory.CreatePrepaidModule(_branding.BrandingId);
-            CreatePrepaidAccount(teen, true, PrepaidCardStatus.Good);
-
+            TestEntityFactory.CreatePrepaidAccount(_teen, true, PrepaidCardStatus.Good);
             CardHolderResponse cardHolderResponse = new CardHolderResponse("123", "Message",
                                                                            "<CardHolderInfo> <CardInfo Card= \"4315830000002628\" nbATTMID=\"2853186\" ReferredBy= \"2459883\" Company= \"2459883\" RegistrationDate= \"09/02/2005\" LastUpdate= \"09/16/2005\" LastName= \"Urban\" FirstName= \"John1\" MiddleName= \"\" Title= \"Coder\" LastName2= \"\" FirstName2= \"\" MiddleName2= \"\" AddrLine1= \"3410 W. Atlanta St.\" AddrLine2= \"\" City= \"Broken Arrow\" State= \"OK\" Country= \"US\" PostalCode= \"74012\" BirthDate= \"12/27/1967\" SSN= \"123121234\" MatriculaNumber= \"1234\" DriverLicense= \"01829304\" DLState= \"OK\" Email= \"jurban@gtplimited.com\" HomePhone= \"9183938393\" OfficePhone= \"\" MobilePhone= \"\" FaxPhone= \"\" ChallengeID= \"1000\" LicenseID= \"393709\" Subcompany= \"2459883\" Status= \"PA\" ExpirationDate=\"08/31/2008\" CardType= \"\" OtherCompanyName= \"\" PictureID= \"\" /></CardHolderInfo>");
-
             var fsvWebServiceMock = new Mock<IFsvWebService>();
             Balance balanceResponse = new Balance("1", @"Success", "100", "100", "100", "100");
             fsvWebServiceMock.Setup(x => x.GetCHInformation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(cardHolderResponse);
             fsvWebServiceMock.Setup(x => x.PrepaidCardBalanceInquiry(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(balanceResponse);
-
             IFsvWebService _interface = fsvWebServiceMock.Object;
-            FSVBankFirstCardProvider provider = new FSVBankFirstCardProvider(GetProviderEntity(), teen, _interface);
-
-            // create request
-            var request = new PrepaidCardSearchRequest();
-            request.Configuration = new RetrievalConfigurationRecord()
-            {
-                ApplicationKey = Guid.NewGuid()
-            };
-            var prepaidCardSearch = new PrepaidCardSearchCriteria();
-            prepaidCardSearch.FirstName = teen.FirstName;
-            prepaidCardSearch.LastName = teen.LastName;
-            prepaidCardSearch.UserIdentifier = new Identifiers.UserIdentifier(parent.UserID).Identifier;
-            prepaidCardSearch.AddressLine1 = teen.Address1;
-            prepaidCardSearch.AddressLine2 = teen.Address2;
-
-            request.Requests.Add(prepaidCardSearch);
-
+            FSVBankFirstCardProvider provider = new FSVBankFirstCardProvider(GetProviderEntity(), _teen, _interface);
+          
+            _request.Requests[0].UserIdentifier=new Identifiers.UserIdentifier(_parent.UserID).Identifier;  
             var target = new GetCardDetailsServiceCommand(_providers);
             target.CardProvider = provider;
-            var result = target.Execute(request);
-
+            var result = target.Execute(_request);
             Assert.IsNotNull(result);
             Assert.AreEqual(0, result.Records.Count);
         }
+        [TestMethod]
+        public void Execute_Failure_RequestIsNull()
+        {
+            _request = null;
+            var target = new GetCardDetailsServiceCommand(ProviderFactory);
+            var result = target.Execute(_request);
+            Assert.IsNotNull(result.Status);
+            Assert.IsFalse(result.Status.IsSuccessful);
+            Assert.AreEqual(
+                string.Format("request must be set{0}Parameter name: request", Environment.NewLine),
+                result.Status.ErrorMessage);
+        }
 
+
+        [TestMethod]
+        public void Execute_Failure_RequestRecordIsEmpty()
+        {
+            PrepaidCardSearchRequest request = new PrepaidCardSearchRequest();
+            var target = new GetCardDetailsServiceCommand(ProviderFactory);
+            var result = target.Execute(request);
+            Assert.IsNotNull(result.Status);
+            Assert.IsFalse(result.Status.IsSuccessful);
+            Assert.AreEqual(
+                string.Format(
+                    "AddCardsRecords must be set{0}Parameter name: request",
+                    Environment.NewLine),
+                result.Status.ErrorMessage);
+        }
         #region Helper
 
         private FsvcardProviderEntity GetProviderEntity()
@@ -214,28 +222,32 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
             }
         }
 
-        private void CreatePrepaidAccount(Teen user, bool isActive, PrepaidCardStatus status)
-        {
-            using (DataAccessAdapter adapter = new DataAccessAdapter(true))
+        private PrepaidCardSearchRequest CreatePrepaidCardSearchRequest(bool initPrepaidCardSearchRequest)
+        {           
+            var result = new PrepaidCardSearchRequest
             {
-                PrepaidCardAccountEntity prepaidCard = new PrepaidCardAccountEntity();
-                prepaidCard.ActivationMethod = PrepaidActivationMethod.unknown;
-                prepaidCard.Active = isActive;
-                prepaidCard.ActiveteDateTime = null;
-                prepaidCard.BrandingCardDesignId = null;
-                prepaidCard.CardIdentifier = null;
-                prepaidCard.CardNumber = "213156484984651";
-                prepaidCard.LostStolenDateTime = null;
-                prepaidCard.MarkedForDeletion = false;
-                prepaidCard.Status = status;
-                prepaidCard.UserCardDesignId = null;
+                Configuration = new RetrievalConfigurationRecord
+                {
+                    ApplicationKey = Guid.NewGuid()
+                },
+                Header = new RequestHeaderRecord
+                {
+                    CallerName = "GetCardDetailsServiceCommandTest"
+                }
+            };
 
-                PrepaidCardAccountUserEntity prepaidCardUser = new PrepaidCardAccountUserEntity();
-                prepaidCardUser.UserId = user.UserID;
-                prepaidCardUser.PrepaidCardAccount = prepaidCard;
-                adapter.SaveEntity(prepaidCardUser);
+            if (initPrepaidCardSearchRequest)
+            {
+                var prepaidCardSearch = new PrepaidCardSearchCriteria();
+                prepaidCardSearch.FirstName = _teen.FirstName;
+                prepaidCardSearch.LastName = _teen.LastName;           
+                prepaidCardSearch.AddressLine1 = _teen.Address1;
+                prepaidCardSearch.AddressLine2 = _teen.Address2;
+                result.Requests.Add(prepaidCardSearch);
             }
-        }
+            return result;
+        }         
+    
 
         #endregion
     }

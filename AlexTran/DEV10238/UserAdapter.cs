@@ -1015,6 +1015,35 @@ namespace Payjr.Core.Adapters
                 }
             }
         }
+        public UserEntity RetrieveUserByPrepaidCardIdentifier(Guid PrepaidCardIdentifier)
+        {
+            using (DataAccessAdapter adapter = new DataAccessAdapter(true))
+            {
+                try
+                {
+                    EntityCollection<UserEntity> users = new EntityCollection<UserEntity>(new UserEntityFactory());
+                    IRelationPredicateBucket bucket = new RelationPredicateBucket();
+                    bucket.Relations.Add(UserEntity.Relations.PrepaidCardAccountUserEntityUsingUserId);
+                    bucket.Relations.Add(PrepaidCardAccountUserEntity.Relations.PrepaidCardAccountEntityUsingPrepaidCardAccountId);
+                    bucket.PredicateExpression.Add(PrepaidCardAccountFields.PrepaidCardAccountId == PrepaidCardIdentifier);
+                    IPrefetchPath2 path = new PrefetchPath2((int)EntityType.UserEntity);
+
+                    adapter.FetchEntityCollection(users, bucket, path);
+
+                    if (users.Count > 0)
+                    {
+                        return users[0];
+                    }
+                    return null;
+
+                }
+                catch (ORMException exceptionMessage)
+                {
+                    DataAccessException exception = new DataAccessException(exceptionMessage.Message, exceptionMessage);
+                    throw exception;
+                }
+            }
+        }
 
         /// <summary>
         /// Retrieves the user using the <paramref name="UserId"/>
