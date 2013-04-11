@@ -1,7 +1,6 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Payjr.Core.ServiceCommands.PrepaidCard;
-using Payjr.Core.Providers;
 using Common.Contracts.Prepaid.Requests;
 using Common.Contracts.Shared.Records;
 using Common.Contracts.Prepaid.Records;
@@ -15,29 +14,26 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
     [TestClass]
     public class CardActivationServiceCommandTest : TestBase2
     {
-        private PrepaidCardAccount _prepaidAccountID;
-        private CardActivationRequest _request;
-
+        private Guid _prepaidAccountID;
+        private string _prepaidCardIdentifier;
+       
         [TestInitialize]
         public void InitializeTest()
         {
             TestEntityFactory.CreatePrepaidAccount(_teen, false, PrepaidCardStatus.Pending);
-            var pcaID = _teen.FinancialAccounts.PrepaidCardAccounts[0].AccountID;
-            Guid _prepaidAccountID = pcaID;
-            _request = CreateCardActivationRequest(true);
-           
-        }
-      // Execute_Successful() chua hoan thanh
+            _prepaidAccountID = _teen.FinancialAccounts.PrepaidCardAccounts[0].AccountID;
+            _prepaidCardIdentifier = new PrepaidCardAccountIdentifier(_prepaidAccountID).DisplayableIdentifier;
+        }      
+
         [TestMethod]
         public void Execute_Successful()
         {
-            var request = CreateCardActivationRequest(true);
+            CardActivationRequest request = CreateCardActivationRequest(true);
             var target = new CardActivationServiceCommand(ProviderFactory);
-            var result = target.Execute(_request);           
+            var result = target.Execute(request);           
             Assert.IsNotNull(result.Status);
-            Assert.IsTrue(result.Status.IsSuccessful);           
-            Assert.IsNotNull(_prepaidAccountID);
-            _request.CardActivations[0].CardIdentifier = new PrepaidCardAccountIdentifier(_prepaidAccountID.ToString()).DisplayableIdentifier;          
+            Assert.IsTrue(result.Status.IsSuccessful);
+             
         }
     /// <summary>
     ///All testcase passed
@@ -100,21 +96,6 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
                 result.Status.ErrorMessage);
         }
 
-        [TestMethod]
-        public void Execute_Failure_IPAddressIsEmpty()
-        {
-            CardActivationRequest request = CreateCardActivationRequest(true);
-            request.CardActivations[0].IPAddress = string.Empty;
-            var target = new CardActivationServiceCommand(ProviderFactory);
-            var result = target.Execute(request);
-            Assert.IsNotNull(result.Status);
-            Assert.IsFalse(result.Status.IsSuccessful);
-            Assert.AreEqual(
-                string.Format(
-                    "ipAddress must be set{0}Parameter name: request.cardActivationRecords[0].IPAddress",
-                    Environment.NewLine),
-                result.Status.ErrorMessage);
-        }         
     
      #region helper methods
 
@@ -127,17 +108,18 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
                     CallerName = "CardActivationServiceCommandTest"
                 }
             };
-
-            result.CardActivations.Add(
-            new CardActivationRequestRecord
+            if (initCardActivationRecord)
             {
-                ActivatingUserIdentifier =
-                new UserIdentifier(_parent.UserID).Identifier,
-                ActivationData = _parent.DOB.Value.ToString(),
-                CardIdentifier = "PJRPCA:12345678-1234-1234-1234-123456123456" 
-            });
+                result.CardActivations.Add(
+                new CardActivationRequestRecord
+                {
+                    ActivatingUserIdentifier = new UserIdentifier(_parent.UserID).Identifier,
+                    ActivationData = _parent.DOB.Value.ToString(),
+                    CardIdentifier = _prepaidCardIdentifier,
+                });
+            }
   
-        return result;
+            return result;
         }
 
         #endregion
