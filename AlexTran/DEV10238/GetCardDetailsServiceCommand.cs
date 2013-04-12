@@ -60,24 +60,22 @@ namespace Payjr.Core.ServiceCommands.Prepaid
         }
 
         protected override bool OnExecute(PrepaidCardSearchResponse response)
-        {
-            try
-            {
+        {            
                 FinancialAccountList<PrepaidCardAccount> account = GetPrepaidCardAccounts();
                 foreach (PrepaidCardAccount prepaidCardAccount in account)
                 {
-                    _parent = User.RetrieveUser(_teen.ParentID) as Parent;
-                    PrepaidCardDetailRecord cardDetail = ConvertPrepaidCardAccountToPrepaidCardDetailRecord(prepaidCardAccount, _teen, _parent);
-                    response.Records.Add(cardDetail);                  
+                    if (_teen != null)
+                    {
+                        _parent = User.RetrieveUser(_teen.ParentID) as Parent;
+                        if (_parent != null)
+                        {
+                            PrepaidCardDetailRecord cardDetail = ConvertPrepaidCardAccountToPrepaidCardDetailRecord(prepaidCardAccount, _teen, _parent);
+                            response.Records.Add(cardDetail);
+                        }                     
+                    }
+                                  
                 }
-              return true;
-            }
-            catch (Exception ex)
-            {
-                Log.ErrorException("Error when trying to get card detail", ex);
-                return false;
-            }
-
+              return true; 
         }
 
         #region Helper
@@ -110,10 +108,8 @@ namespace Payjr.Core.ServiceCommands.Prepaid
         {
             Guid prepaidCardID = new Identifiers.PrepaidCardAccountIdentifier(prepaidCardIdentifier).PersistableID;
             _teen = User.RetrieveUserByPrepaidCardAccountID(prepaidCardID) as Teen;
-            FinancialAccountList<PrepaidCardAccount> result = new FinancialAccountList<PrepaidCardAccount>(new List<PrepaidCardAccount>());
-            if (_teen != null)
-            {
-                var prepaidCardAccount = PrepaidCardAccount.RetrievePrepaidCardAccountByID(prepaidCardID);
+            FinancialAccountList<PrepaidCardAccount> result = new FinancialAccountList<PrepaidCardAccount>(new List<PrepaidCardAccount>());           
+            var prepaidCardAccount = PrepaidCardAccount.RetrievePrepaidCardAccountByID(prepaidCardID);
                 if (prepaidCardAccount != null)
                 {
                     if (CardProvider != null)
@@ -121,9 +117,7 @@ namespace Payjr.Core.ServiceCommands.Prepaid
                         prepaidCardAccount.CardProvider = CardProvider;
                     }
                     result.AddItem(prepaidCardAccount);
-                }            
-               
-            }
+                }   
             return result;
         }
 
@@ -177,6 +171,7 @@ namespace Payjr.Core.ServiceCommands.Prepaid
     
         private PrepaidCardDetailRecord ConvertPrepaidCardAccountToPrepaidCardDetailRecord(PrepaidCardAccount prepaidCardAccount, Teen teen, Parent parent)
         {
+
             PrepaidCardStatus2 cardStatus2 = ConvertToPrepaidCardStatus2(prepaidCardAccount.Status);
             decimal? balance = prepaidCardAccount.GetBalance();
             EntityCollection<JournalEntity> journalEntities = prepaidCardAccount.GetJournalEntries();
