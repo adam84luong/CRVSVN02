@@ -60,9 +60,9 @@ namespace Payjr.Core.ServiceCommands.Prepaid
         }
 
         protected override bool OnExecute(PrepaidCardSearchResponse response)
-        {            
-                FinancialAccountList<PrepaidCardAccount> account = GetPrepaidCardAccounts();
-                foreach (PrepaidCardAccount prepaidCardAccount in account)
+        {
+            FinancialAccountList<PrepaidCardAccount> prepaidCardAccounts= GetPrepaidCardAccounts();
+            foreach (PrepaidCardAccount prepaidCardAccount in prepaidCardAccounts)
                 {
                     if (_teen != null)
                     {
