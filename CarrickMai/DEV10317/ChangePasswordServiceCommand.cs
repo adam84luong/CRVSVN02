@@ -13,6 +13,8 @@ using Payjr.Core.Metrics;
 using Payjr.Core.Providers;
 using Payjr.Core.Users;
 using Payjr.Entity.EntityClasses;
+using Payjr.Core.Services;
+using Payjr.Core.UserInfo;
 
 namespace Payjr.Core.ServiceCommands.Authentication
 {
@@ -22,6 +24,10 @@ namespace Payjr.Core.ServiceCommands.Authentication
         private string _oldPassword;
         private string _newPassword;
         private UserEntity _userEntity;
+        bool _sendMessage;
+        private NotificationService _notificationService;
+        string _subject = "Change Password";
+
         public ChangePasswordServiceCommand(IProviderFactory providerFactory)
             : base(providerFactory)
         {
@@ -72,13 +78,16 @@ namespace Payjr.Core.ServiceCommands.Authentication
                 Log.Error("ChangePasswordServiceCommand can not process with a unvalid password");
                 throw new ArgumentException(string.Format("Password is invalid, user name: {0}", request.UserName), "request");
             }
+           
         }
         protected override bool OnExecute(AuthServiceResponse response)
-        {
+        {                     
             try
             {
                 _userEntity.Password = AdapterFactory.UserAdapter.CreateSecurePassword(_userEntity.PasswordSalt,
                                                                                         _newPassword);
+              
+                _sendMessage = _notificationService.SendMessage(_userEntity.BrandingId, _userEntity.Emails, _subject, _userEntity.Password);
                 _userEntity.LastPasswordChangedDate = DateTime.UtcNow;
                 AdapterFactory.UserAdapter.UpdateUser(_userEntity);
             }
