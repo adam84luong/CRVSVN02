@@ -108,18 +108,21 @@ namespace Payjr.Core.ServiceCommands.Prepaid
 
         private FinancialAccountList<PrepaidCardAccount> GetPrepaidCardAccountsByPrepaidCardIdentifier(string prepaidCardIdentifier)
         {
-            Guid user = new Identifiers.PrepaidCardAccountIdentifier(prepaidCardIdentifier).PersistableID;
-            _teen = User.RetrieveUserByPrepaidCardAccountID(user) as Teen;
+            Guid prepaidCardID = new Identifiers.PrepaidCardAccountIdentifier(prepaidCardIdentifier).PersistableID;
+            _teen = User.RetrieveUserByPrepaidCardAccountID(prepaidCardID) as Teen;
             FinancialAccountList<PrepaidCardAccount> result = new FinancialAccountList<PrepaidCardAccount>(new List<PrepaidCardAccount>());
             if (_teen != null)
             {
-                if (CardProvider != null)
+                var prepaidCardAccount = PrepaidCardAccount.RetrievePrepaidCardAccountByID(prepaidCardID);
+                if (prepaidCardAccount != null)
                 {
-                    _teen.CardProvider = CardProvider;
-                  
-                }
-                var aPrepaidCard = _teen.FinancialAccounts.GetPrepaidCardAccountByPrepaidCardAccountID(user);
-                result.AddItem(aPrepaidCard);              
+                    if (CardProvider != null)
+                    {
+                        prepaidCardAccount.CardProvider = CardProvider;
+                    }
+                    result.AddItem(prepaidCardAccount);
+                }            
+               
             }
             return result;
         }
