@@ -21,7 +21,7 @@ namespace Payjr.Core.ServiceCommands.Prepaid
 {
     public class GetCardDetailsServiceCommand : ProviderServiceCommandBase<PrepaidCardSearchRequest, PrepaidCardSearchResponse>
     {
-        private PrepaidCardSearchCriteria _cardSearchCriteria;
+        private List<PrepaidCardSearchCriteria> _cardSearchCriteria;
         private ICardProvider _cardProvider;   
         private Teen _teen;
         private Parent _parent;
@@ -56,13 +56,15 @@ namespace Payjr.Core.ServiceCommands.Prepaid
                 throw new ArgumentException("request.Requests must have item", "request");
             }
 
-            _cardSearchCriteria = request.Requests[0];
+            _cardSearchCriteria = request.Requests;
         }
 
         protected override bool OnExecute(PrepaidCardSearchResponse response)
         {
-            FinancialAccountList<PrepaidCardAccount> prepaidCardAccounts= GetPrepaidCardAccounts();
-            foreach (PrepaidCardAccount prepaidCardAccount in prepaidCardAccounts)
+            foreach (PrepaidCardSearchCriteria prepaidCardSearch in _cardSearchCriteria)
+            {
+                FinancialAccountList<PrepaidCardAccount> prepaidCardAccounts = GetPrepaidCardAccounts(prepaidCardSearch);
+                foreach (PrepaidCardAccount prepaidCardAccount in prepaidCardAccounts)
                 {
                     if (_teen != null)
                     {
@@ -71,35 +73,36 @@ namespace Payjr.Core.ServiceCommands.Prepaid
                         {
                             PrepaidCardDetailRecord cardDetail = ConvertPrepaidCardAccountToPrepaidCardDetailRecord(prepaidCardAccount, _teen, _parent);
                             response.Records.Add(cardDetail);
-                        }                     
+                        }
                     }
-                                  
+
                 }
+            }
               return true; 
         }
 
         #region Helper
 
-        private FinancialAccountList<PrepaidCardAccount> GetPrepaidCardAccounts()
+        private FinancialAccountList<PrepaidCardAccount> GetPrepaidCardAccounts(PrepaidCardSearchCriteria prepaidCardSearch)
         {
-            if (!string.IsNullOrWhiteSpace(_cardSearchCriteria.PrepaidCardIdentifier))
+            if (!string.IsNullOrWhiteSpace(prepaidCardSearch.PrepaidCardIdentifier))
             {
-                return GetPrepaidCardAccountsByPrepaidCardIdentifier(_cardSearchCriteria.PrepaidCardIdentifier);
+                return GetPrepaidCardAccountsByPrepaidCardIdentifier(prepaidCardSearch.PrepaidCardIdentifier);
             }
-            else if (!string.IsNullOrWhiteSpace(_cardSearchCriteria.UserIdentifier))
-            {               
-                if (!string.IsNullOrWhiteSpace(_cardSearchCriteria.CardNumberFull))
+            else if (!string.IsNullOrWhiteSpace(prepaidCardSearch.UserIdentifier))
+            {
+                if (!string.IsNullOrWhiteSpace(prepaidCardSearch.CardNumberFull))
                 {
-                    return GetPrepaidCardAccountsByUserIdentifierAndCardNumberFull(_cardSearchCriteria.UserIdentifier, _cardSearchCriteria.CardNumberFull);
+                    return GetPrepaidCardAccountsByUserIdentifierAndCardNumberFull(prepaidCardSearch.UserIdentifier, prepaidCardSearch.CardNumberFull);
                 }
                 else
                 {
-                    return GetPrepaidCardAccountsByUserIdentifier(_cardSearchCriteria.UserIdentifier);
+                    return GetPrepaidCardAccountsByUserIdentifier(prepaidCardSearch.UserIdentifier);
                 }
             }
-            else if (!string.IsNullOrWhiteSpace(_cardSearchCriteria.CardNumberFull))
+            else if (!string.IsNullOrWhiteSpace(prepaidCardSearch.CardNumberFull))
             {
-                return GetPrepaidCardAccountsByCardNumberFull(_cardSearchCriteria.CardNumberFull);
+                return GetPrepaidCardAccountsByCardNumberFull(prepaidCardSearch.CardNumberFull);
             }          
             return new FinancialAccountList<PrepaidCardAccount>(new List<PrepaidCardAccount>());
         }
