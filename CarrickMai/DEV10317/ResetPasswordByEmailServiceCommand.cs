@@ -11,6 +11,7 @@ using Payjr.Core.Providers;
 using Payjr.Core.Metrics;
 using Common.Contracts.Authentication.Requests;
 using Payjr.Entity.EntityClasses;
+using Payjr.Core.Users;
 
 namespace Payjr.Core.ServiceCommands.Authentication
 {
@@ -18,6 +19,7 @@ namespace Payjr.Core.ServiceCommands.Authentication
     {
         private string _email;
         private string _password;
+        
 
         public ResetPasswordByEmailServiceCommand(IProviderFactory providerFactory)
             : base(providerFactory)
@@ -47,6 +49,7 @@ namespace Payjr.Core.ServiceCommands.Authentication
 
         protected override bool OnExecute(AuthServiceResponse response)
         {
+            List<User> userinfo = User.SearchUsersByEmailAddress(_email);
             try
             {
                 if (AdapterFactory.UserAdapter.ResetUserPasswordByEmail(_email, out _password))
@@ -55,8 +58,23 @@ namespace Payjr.Core.ServiceCommands.Authentication
                     response.Status.IsSuccessful = true;
                     response.Status.ErrorMessage = string.Empty;
                     response.Data = _password;
+                    if (userinfo.Count == 1)
+                    {
+                        if (userinfo[0].ResetPassword(null) && userinfo[0].Save(null))
+                        {
+                            response.Result = Result.Success;
+                        }
+                        else
+                        {
+                            response.Status.ErrorMessage = string.Empty;
+                        }
+                    }
+                    else
+                    {
+                        response.Status.ErrorMessage = String.Format("If you do not have an email account setup please contact your parent or customer service for help resetting your password");
+                    }
                     return true;
-                }
+                }                
 
                 Log.Info("Failure when trying to reset password by email:" + _email);                
                 response.Status.ErrorMessage = String.Format("ResetPasswordByEmail is failure");                
