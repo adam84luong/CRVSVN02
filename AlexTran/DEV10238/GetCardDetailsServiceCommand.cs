@@ -66,12 +66,9 @@ namespace Payjr.Core.ServiceCommands.Prepaid
                 FinancialAccountList<PrepaidCardAccount> account = GetPrepaidCardAccounts();
                 foreach (PrepaidCardAccount prepaidCardAccount in account)
                 {
-                    if (prepaidCardAccount != null)
-                    {
-                        _parent = User.RetrieveUser(_teen.ParentID) as Parent;
-                        PrepaidCardDetailRecord cardDetail = ConvertPrepaidCardAccountToPrepaidCardDetailRecord(prepaidCardAccount, _teen, _parent);
-                        response.Records.Add(cardDetail);
-                    }
+                    _parent = User.RetrieveUser(_teen.ParentID) as Parent;
+                    PrepaidCardDetailRecord cardDetail = ConvertPrepaidCardAccountToPrepaidCardDetailRecord(prepaidCardAccount, _teen, _parent);
+                    response.Records.Add(cardDetail);                  
                 }
               return true;
             }
@@ -112,16 +109,19 @@ namespace Payjr.Core.ServiceCommands.Prepaid
         private FinancialAccountList<PrepaidCardAccount> GetPrepaidCardAccountsByPrepaidCardIdentifier(string prepaidCardIdentifier)
         {
             Guid user = new Identifiers.PrepaidCardAccountIdentifier(prepaidCardIdentifier).PersistableID;
-            _teen = User.RetrieveUserByPrepaidCardAccountID(user) as Teen;       
+            _teen = User.RetrieveUserByPrepaidCardAccountID(user) as Teen;
+            FinancialAccountList<PrepaidCardAccount> result = new FinancialAccountList<PrepaidCardAccount>(new List<PrepaidCardAccount>());
             if (_teen != null)
             {
                 if (CardProvider != null)
                 {
                     _teen.CardProvider = CardProvider;
+                  
                 }
-                return _teen.FinancialAccounts.PrepaidCardAccounts;
+                var aPrepaidCard = _teen.FinancialAccounts.GetPrepaidCardAccountByPrepaidCardAccountID(user);
+                result.AddItem(aPrepaidCard);              
             }
-            return new FinancialAccountList<PrepaidCardAccount>(new List<PrepaidCardAccount>());
+            return result;
         }
 
         private FinancialAccountList<PrepaidCardAccount> GetPrepaidCardAccountsByUserIdentifier(string userIdentifier)

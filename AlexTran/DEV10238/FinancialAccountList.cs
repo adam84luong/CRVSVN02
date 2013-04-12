@@ -282,7 +282,18 @@ namespace Payjr.Core.FinancialAccounts
             }
             return null;
         }
-    
+        public PrepaidCardAccount GetPrepaidCardAccountByPrepaidCardAccountID(Guid prepaidCardAccountID)
+        {
+            foreach (PrepaidCardAccount card in PrepaidCardAccounts)
+            {
+                if (card.AccountID == prepaidCardAccountID)
+                {
+                    return card;
+                }
+            }
+            return null;
+        }
+
 
         public PrepaidCardAccount GetPrepaidCardAccountByCustomCardDesignID(Guid customCardDesignID)
         {
