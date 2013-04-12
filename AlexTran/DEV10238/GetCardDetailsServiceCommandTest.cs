@@ -74,6 +74,32 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
             Assert.AreEqual(_teen.FirstName, result.Records[0].CardHolder.FirstName);
             Assert.AreEqual(PrepaidCardStatus2.Activated, result.Records[0].CardStatus2);
         }
+
+        [TestMethod]
+        public void ExecuteTestSucess_SearchByUserIdentifierAndCardNumber()
+        {
+            TestEntityFactory.CreatePrepaidAccount(_teen, true, PrepaidCardStatus.Good);
+            CardHolderResponse cardHolderResponse = new CardHolderResponse("123", "Message",
+                                                                           "<CardHolderInfo> <CardInfo Card= \"4315830000002628\" nbATTMID=\"2853186\" ReferredBy= \"2459883\" Company= \"2459883\" RegistrationDate= \"09/02/2005\" LastUpdate= \"09/16/2005\" LastName= \"Urban\" FirstName= \"John1\" MiddleName= \"\" Title= \"Coder\" LastName2= \"\" FirstName2= \"\" MiddleName2= \"\" AddrLine1= \"3410 W. Atlanta St.\" AddrLine2= \"\" City= \"Broken Arrow\" State= \"OK\" Country= \"US\" PostalCode= \"74012\" BirthDate= \"12/27/1967\" SSN= \"123121234\" MatriculaNumber= \"1234\" DriverLicense= \"01829304\" DLState= \"OK\" Email= \"jurban@gtplimited.com\" HomePhone= \"9183938393\" OfficePhone= \"\" MobilePhone= \"\" FaxPhone= \"\" ChallengeID= \"1000\" LicenseID= \"393709\" Subcompany= \"2459883\" Status= \"PA\" ExpirationDate=\"08/31/2008\" CardType= \"\" OtherCompanyName= \"\" PictureID= \"\" /></CardHolderInfo>");
+            var fsvWebServiceMock = new Mock<IFsvWebService>();
+            Balance balanceResponse = new Balance("1", @"Success", "100", "100", "100", "100");
+            fsvWebServiceMock.Setup(x => x.GetCHInformation(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(cardHolderResponse);
+            fsvWebServiceMock.Setup(x => x.PrepaidCardBalanceInquiry(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(balanceResponse);
+
+            IFsvWebService _interface = fsvWebServiceMock.Object;
+            FSVBankFirstCardProvider provider = new FSVBankFirstCardProvider(GetProviderEntity(), _teen, _interface);
+
+            _request.Requests[0].UserIdentifier = new Identifiers.UserIdentifier(_teen.UserID).Identifier;
+            _request.Requests[0].CardNumberFull = "5150620000973224";
+            var target = new GetCardDetailsServiceCommand(_providers);
+            target.CardProvider = provider;
+            var result = target.Execute(_request);
+            Assert.IsNotNull(result);
+            Assert.AreEqual(1, result.Records.Count);
+            Assert.AreEqual(100, result.Records[0].CardBalance);
+            Assert.AreEqual(_teen.FirstName, result.Records[0].CardHolder.FirstName);
+            Assert.AreEqual(PrepaidCardStatus2.Activated, result.Records[0].CardStatus2);
+        }
         [TestMethod]
         public void ExecuteTestSucess_SearchByPrepaidCardIdentifier()
         {
@@ -121,7 +147,7 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
             Assert.AreEqual(PrepaidCardStatus2.Activated, result.Records[0].CardStatus2);
         }
         [TestMethod]
-        public void ExecuteTestFail_PrepaidCardNotFound()
+        public void Execute_Failure_PrepaidCardNotFound()
         {
            CardHolderResponse cardHolderResponse = new CardHolderResponse("123", "Message",
                                                                            "<CardHolderInfo> <CardInfo Card= \"4315830000002628\" nbATTMID=\"2853186\" ReferredBy= \"2459883\" Company= \"2459883\" RegistrationDate= \"09/02/2005\" LastUpdate= \"09/16/2005\" LastName= \"Urban\" FirstName= \"John1\" MiddleName= \"\" Title= \"Coder\" LastName2= \"\" FirstName2= \"\" MiddleName2= \"\" AddrLine1= \"3410 W. Atlanta St.\" AddrLine2= \"\" City= \"Broken Arrow\" State= \"OK\" Country= \"US\" PostalCode= \"74012\" BirthDate= \"12/27/1967\" SSN= \"123121234\" MatriculaNumber= \"1234\" DriverLicense= \"01829304\" DLState= \"OK\" Email= \"jurban@gtplimited.com\" HomePhone= \"9183938393\" OfficePhone= \"\" MobilePhone= \"\" FaxPhone= \"\" ChallengeID= \"1000\" LicenseID= \"393709\" Subcompany= \"2459883\" Status= \"PA\" ExpirationDate=\"08/31/2008\" CardType= \"\" OtherCompanyName= \"\" PictureID= \"\" /></CardHolderInfo>");
@@ -147,7 +173,7 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
         }
 
         [TestMethod]
-        public void ExecuteTestFail_TeenNotFound()
+        public void Execute_Failure_TeenNotFound()
         {
             TestEntityFactory.CreatePrepaidAccount(_teen, true, PrepaidCardStatus.Good);
             CardHolderResponse cardHolderResponse = new CardHolderResponse("123", "Message",
@@ -190,7 +216,7 @@ namespace Payjr.Core.Test.ServiceCommands.Prepaid
             Assert.IsFalse(result.Status.IsSuccessful);
             Assert.AreEqual(
                 string.Format(
-                    "AddCardsRecords must be set{0}Parameter name: request",
+                    "request.Requests must have item{0}Parameter name: request",
                     Environment.NewLine),
                 result.Status.ErrorMessage);
         }

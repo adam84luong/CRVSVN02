@@ -16,15 +16,16 @@ using Payjr.Entity;
 using Payjr.Entity.EntityClasses;
 using Payjr.Entity.HelperClasses;
 using Payjr.Core.BrandingSite;
-using Common.Business.Validation;
 
 namespace Payjr.Core.ServiceCommands.Prepaid
 {
     public class GetCardDetailsServiceCommand : ProviderServiceCommandBase<PrepaidCardSearchRequest, PrepaidCardSearchResponse>
     {
-        private List<PrepaidCardSearchCriteria> cardSearchCriteria;
-        private ICardProvider _cardProvider;
-
+        private PrepaidCardSearchCriteria _cardSearchCriteria;
+        private ICardProvider _cardProvider;   
+        private Teen _teen;
+        private Parent _parent;
+      
         public GetCardDetailsServiceCommand(IProviderFactory providerFactory)
             : base(providerFactory)
         {
@@ -47,89 +48,32 @@ namespace Payjr.Core.ServiceCommands.Prepaid
             if (request == null)
             {
                 Log.Error("GetCardDetailsServiceCommand can not process with request is null");
-                throw new ArgumentNullException( "request","request must be set");
+                throw new ArgumentNullException("request", "request must be set");
             }
             if (request.Requests.Count == 0)
             {
                 Log.Error("GetCardDetailsServiceCommand can not process with request.Requests has not any item");
-                throw new ArgumentException("AddCardsRecords must be set", "request");
+                throw new ArgumentException("request.Requests must have item", "request");
             }
 
-            cardSearchCriteria = request.Requests;
+            _cardSearchCriteria = request.Requests[0];
         }
 
         protected override bool OnExecute(PrepaidCardSearchResponse response)
         {
             try
             {
-                foreach (PrepaidCardSearchCriteria prepaidCardSearch in cardSearchCriteria)
+                FinancialAccountList<PrepaidCardAccount> account = GetPrepaidCardAccounts();
+                foreach (PrepaidCardAccount prepaidCardAccount in account)
                 {
-                    if (!string.IsNullOrWhiteSpace(prepaidCardSearch.PrepaidCardIdentifier))
+                    if (prepaidCardAccount != null)
                     {
-                        Guid prepaidCardID = new Identifiers.PrepaidCardAccountIdentifier(prepaidCardSearch.PrepaidCardIdentifier).PersistableID;                        
-                        UserEntity user = AdapterFactory.UserAdapter.RetrieveUserByPrepaidCardIdentifier(prepaidCardID);
-                            if (user != null && user.RoleType == RoleType.RegisteredTeen)
-                            {
-                                Teen teen = new Teen((RegisteredTeenEntity)user);
-                                if (CardProvider != null)
-                                {
-                                    teen.CardProvider = CardProvider;
-                                }
-                                FinancialAccountList<PrepaidCardAccount> account = teen.FinancialAccounts.PrepaidCardAccounts;
-                                foreach (PrepaidCardAccount prepaidCardAccount in account)
-                                {
-                                    if (prepaidCardAccount != null)
-                                    {
-                                        PrepaidCardDetailRecord cardDetail = GetPrepaidCardDetailRecordbyPrepaidCardAccount(prepaidCardAccount, teen);
-                                        response.Records.Add(cardDetail);
-                                    }
-                                }                                
-                            }                        
+                        _parent = User.RetrieveUser(_teen.ParentID) as Parent;
+                        PrepaidCardDetailRecord cardDetail = ConvertPrepaidCardAccountToPrepaidCardDetailRecord(prepaidCardAccount, _teen, _parent);
+                        response.Records.Add(cardDetail);
                     }
-                    else if (!string.IsNullOrWhiteSpace(prepaidCardSearch.CardNumberFull))
-                    {
-                        UserEntity user = AdapterFactory.UserAdapter.RetrieveUserByPrepaidCardNumber(prepaidCardSearch.CardNumberFull);
-                        if (user != null && user.RoleType == RoleType.RegisteredTeen)
-                        {
-                            Teen teen = new Teen((RegisteredTeenEntity)user);
-                            if (CardProvider != null)
-                            {
-                                teen.CardProvider = CardProvider;
-                            }
-                            FinancialAccountList<PrepaidCardAccount> account = teen.FinancialAccounts.PrepaidCardAccounts;
-                            PrepaidCardAccount prepaidCardAccount = account.GetPrepaidCardAccountByCardNumber(prepaidCardSearch.CardNumberFull);
-                            if (prepaidCardAccount != null)
-                            {
-                                PrepaidCardDetailRecord cardDetail = GetPrepaidCardDetailRecordbyPrepaidCardAccount(prepaidCardAccount, teen);
-                                response.Records.Add(cardDetail);                  
-                            }
-                        }
-                    }
-                    else if (!string.IsNullOrWhiteSpace(prepaidCardSearch.UserIdentifier))
-                    {
-                        Guid userId = new Identifiers.UserIdentifier(prepaidCardSearch.UserIdentifier).ID;
-                        UserEntity user = AdapterFactory.UserAdapter.RetrieveUserByUserID(userId.ToString());
-                        if (user != null && user.RoleType == RoleType.RegisteredTeen)
-                        {
-                            Teen teen = new Teen((RegisteredTeenEntity)user);
-                            if (CardProvider != null)
-                            {
-                                teen.CardProvider = CardProvider;
-                            }
-                            FinancialAccountList<PrepaidCardAccount> account = teen.FinancialAccounts.PrepaidCardAccounts;
-                            foreach (PrepaidCardAccount prepaidCardAccount in account)
-                            {
-                                if (prepaidCardAccount != null)
-                                {
-                                    PrepaidCardDetailRecord cardDetail = GetPrepaidCardDetailRecordbyPrepaidCardAccount(prepaidCardAccount, teen);
-                                    response.Records.Add(cardDetail);
-                                }
-                            }                 
-                        }    
-                      
-                    }              
                 }
-                return true;
+              return true;
             }
             catch (Exception ex)
             {
@@ -139,9 +83,96 @@ namespace Payjr.Core.ServiceCommands.Prepaid
 
         }
 
-
         #region Helper
-        private PrepaidCardDetailRecord GetPrepaidCardDetailRecordbyPrepaidCardAccount(PrepaidCardAccount prepaidCardAccount, Teen teen)
+
+        private FinancialAccountList<PrepaidCardAccount> GetPrepaidCardAccounts()
+        {
+            if (!string.IsNullOrWhiteSpace(_cardSearchCriteria.PrepaidCardIdentifier))
+            {
+                return GetPrepaidCardAccountsByPrepaidCardIdentifier(_cardSearchCriteria.PrepaidCardIdentifier);
+            }
+            else if (!string.IsNullOrWhiteSpace(_cardSearchCriteria.UserIdentifier))
+            {               
+                if (!string.IsNullOrWhiteSpace(_cardSearchCriteria.CardNumberFull))
+                {
+                    return GetPrepaidCardAccountsByUserIdentifierAndCardNumberFull(_cardSearchCriteria.UserIdentifier, _cardSearchCriteria.CardNumberFull);
+                }
+                else
+                {
+                    return GetPrepaidCardAccountsByUserIdentifier(_cardSearchCriteria.UserIdentifier);
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(_cardSearchCriteria.CardNumberFull))
+            {
+                return GetPrepaidCardAccountsByCardNumberFull(_cardSearchCriteria.CardNumberFull);
+            }          
+            return new FinancialAccountList<PrepaidCardAccount>(new List<PrepaidCardAccount>());
+        }
+
+        private FinancialAccountList<PrepaidCardAccount> GetPrepaidCardAccountsByPrepaidCardIdentifier(string prepaidCardIdentifier)
+        {
+            Guid user = new Identifiers.PrepaidCardAccountIdentifier(prepaidCardIdentifier).PersistableID;
+            _teen = User.RetrieveUserByPrepaidCardAccountID(user) as Teen;       
+            if (_teen != null)
+            {
+                if (CardProvider != null)
+                {
+                    _teen.CardProvider = CardProvider;
+                }
+                return _teen.FinancialAccounts.PrepaidCardAccounts;
+            }
+            return new FinancialAccountList<PrepaidCardAccount>(new List<PrepaidCardAccount>());
+        }
+
+        private FinancialAccountList<PrepaidCardAccount> GetPrepaidCardAccountsByUserIdentifier(string userIdentifier)
+        {   
+            Guid userId = new Identifiers.UserIdentifier(userIdentifier).ID;
+            _teen = User.RetrieveUser(userId) as Teen;
+            if (_teen != null)
+            {
+                if (CardProvider != null)
+                {
+                    _teen.CardProvider = CardProvider;
+                }
+                return _teen.FinancialAccounts.PrepaidCardAccounts;
+            }
+            return new FinancialAccountList<PrepaidCardAccount>(new List<PrepaidCardAccount>());
+        }
+
+        private FinancialAccountList<PrepaidCardAccount> GetPrepaidCardAccountsByUserIdentifierAndCardNumberFull(string userIdentifier, string cardNumber)
+        {
+            Guid userId = new Identifiers.UserIdentifier(userIdentifier).ID;
+            _teen = User.RetrieveUser(userId) as Teen;
+            FinancialAccountList<PrepaidCardAccount> result = new FinancialAccountList<PrepaidCardAccount>(new List<PrepaidCardAccount>());
+            if (_teen != null)
+            {
+                if (CardProvider != null)
+                {
+                    _teen.CardProvider = CardProvider;
+                }
+                var aPrepaidCard = _teen.FinancialAccounts.GetPrepaidCardAccountByCardNumber(cardNumber);
+                result.AddItem(aPrepaidCard);
+            }
+            return result;
+        }
+
+        private FinancialAccountList<PrepaidCardAccount> GetPrepaidCardAccountsByCardNumberFull(string cardNumber)
+        {
+             _teen =User.RetrieveUserByPrepaidCardNumber(cardNumber) as Teen ;
+            FinancialAccountList<PrepaidCardAccount> result = new FinancialAccountList<PrepaidCardAccount>(new List<PrepaidCardAccount>());
+            if (_teen != null)
+            {
+                if (CardProvider != null)
+                    {
+                   _teen.CardProvider = CardProvider;
+                 }
+                var aPrepaidCard = _teen.FinancialAccounts.GetPrepaidCardAccountByCardNumber(cardNumber);
+                result.AddItem(aPrepaidCard);
+            }
+            return result;
+        }
+    
+        private PrepaidCardDetailRecord ConvertPrepaidCardAccountToPrepaidCardDetailRecord(PrepaidCardAccount prepaidCardAccount, Teen teen, Parent parent)
         {
             PrepaidCardStatus2 cardStatus2 = ConvertToPrepaidCardStatus2(prepaidCardAccount.Status);
             decimal? balance = prepaidCardAccount.GetBalance();
@@ -163,6 +194,18 @@ namespace Payjr.Core.ServiceCommands.Prepaid
                     Country = teen.Country,
                     PhoneNumber = teen.Phone.Number
                 },
+                Purchaser = new ContactInformation()
+                {
+                    FirstName = parent.FirstName,
+                    MiddleName = parent.MiddleName,
+                    LastName = parent.LastName,
+                    EmailAddress = parent.EmailAddress,
+                    AddressLine1 = parent.Address1,
+                    AddressLine2 = parent.Address2,
+                    City = parent.City,
+                    Country = parent.Country,
+                    PhoneNumber = parent.Phone.Number
+                },
                 PrepaidCardIdentifier = new Identifiers.PrepaidCardAccountIdentifier(prepaidCardAccount.AccountID).DisplayableIdentifier,
                 IsPendingReplacement = prepaidCardAccount.IsPendingReplacement,
                 UtcCreatedDate = teen.TimeZone.ToUniversalTime(createdDate),
@@ -177,9 +220,9 @@ namespace Payjr.Core.ServiceCommands.Prepaid
                 ExpirationDate = prepaidCardAccount.ExpirationDate,
             };
 
-            return cardDetail;        
+            return cardDetail;
         }
-    
+
         private PrepaidCardStatus2 ConvertToPrepaidCardStatus2(PrepaidCardStatus status)
         {
             switch (status)
@@ -202,3 +245,4 @@ namespace Payjr.Core.ServiceCommands.Prepaid
         #endregion
     }
 }
+
