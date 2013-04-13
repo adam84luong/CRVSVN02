@@ -2787,7 +2787,8 @@ namespace Payjr.Core.Users
         {
             if (answer == null || answer.Length <= 0)
             {
-                return false;
+                _passwordReset = true;
+                return true;
             }
             if (!AdapterFactory.UserAdapter.ResetUserPassowrd(UserEntity, answer, out _newPassword))
             {
