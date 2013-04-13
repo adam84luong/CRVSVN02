@@ -2785,18 +2785,15 @@ namespace Payjr.Core.Users
         /// <returns></returns>
         public bool ResetPassword(string answer)
         {
-            if (answer != null)
+            if (answer == null || answer.Length <= 0)
             {
-                if (!AdapterFactory.UserAdapter.ResetUserPassowrd(UserEntity, answer, out _newPassword))
-                {
+                return false;
+            }
+            if (!AdapterFactory.UserAdapter.ResetUserPassowrd(UserEntity, answer, out _newPassword))
+            {
                     return false;
-                }
             }
-            else
-            {
-                _passwordReset = true;
-                return true;
-            }
+            _passwordReset = true;
             return true;
         }
 
