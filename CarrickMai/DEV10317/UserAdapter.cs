@@ -1690,6 +1690,11 @@ namespace Payjr.Core.Adapters
         {
             newPassword = "";
 
+            if (answer == null)
+            {
+                newPassword = GeneratePassword(user);
+                return true;
+            }
             // Remove case-sensitivity and make sure we aren't going to have problems with whitespace.
             if (user.PasswordAnswer.ToLower().Trim() != answer.ToLower().Trim())
             {
