@@ -201,6 +201,11 @@ namespace Payjr.Core.Users
             }
         }
 
+        public string NewPassword
+        {
+            get { return _newPassword; }
+        }
+
         /// <summary>
         /// Password salt
         /// </summary>
@@ -2785,14 +2790,9 @@ namespace Payjr.Core.Users
         /// <returns></returns>
         public bool ResetPassword(string answer)
         {
-            if (answer == null || answer.Length <= 0)
-            {
-                _passwordReset = true;
-                return true;
-            }
             if (!AdapterFactory.UserAdapter.ResetUserPassowrd(UserEntity, answer, out _newPassword))
             {
-                    return false;
+                return false;
             }
             _passwordReset = true;
             return true;
