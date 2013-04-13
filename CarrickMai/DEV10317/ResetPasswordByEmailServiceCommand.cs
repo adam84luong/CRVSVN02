@@ -18,7 +18,6 @@ namespace Payjr.Core.ServiceCommands.Authentication
     public class ResetPasswordByEmailServiceCommand : ProviderServiceCommand<IProviderFactory, MetricRecorder, LocalRequest, AuthServiceResponse>
     {
         private string _email;
-        private string _password;
         
 
         public ResetPasswordByEmailServiceCommand(IProviderFactory providerFactory)
@@ -55,15 +54,12 @@ namespace Payjr.Core.ServiceCommands.Authentication
                 if (userinfo.Count == 1)
                 {
                     if (userinfo[0].ResetPassword(null) && userinfo[0].Save(null))
-                    {
-                        if (AdapterFactory.UserAdapter.ResetUserPasswordByEmail(_email, out _password))
-                        {
+                    { 
                             response.Status.IsSuccessful = true;
                             response.Result = Result.Success;
-                            response.Data = _password;
+                            response.Data = userinfo[0].NewPassword;
                             response.Status.ErrorMessage = string.Empty;
                             return true;
-                        }
                     }                    
                  }
                  else
