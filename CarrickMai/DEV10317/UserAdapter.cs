@@ -429,10 +429,7 @@ namespace Payjr.Core.Adapters
             {
                 var userIdentifierEntity = new UserIdentifierEntity();
                 userIdentifierEntity.IdentifierType = IdentifierType.SSN;
-                if (!String.IsNullOrEmpty(ssn))
-                {
-                    ssn = Utils.TryTrim(ssn);
-                }
+                ssn = Utils.TryTrim(ssn);
                 userIdentifierEntity.Identifier = ssn;
                 parent.UserIdentifiers.Add(userIdentifierEntity);
             }
@@ -1690,20 +1687,12 @@ namespace Payjr.Core.Adapters
         {
             newPassword = "";
 
-            if (answer == null)
+            if ((answer == null) || (user.PasswordAnswer.ToLower().Trim() == answer.ToLower().Trim()))
             {
                 newPassword = GeneratePassword(user);
                 return true;
             }
-            // Remove case-sensitivity and make sure we aren't going to have problems with whitespace.
-            if (user.PasswordAnswer.ToLower().Trim() != answer.ToLower().Trim())
-            {
-                return false;
-            }
-
-            newPassword = GeneratePassword(user);
-
-            return true;
+            return false;
         }
 
         /// <summary>
