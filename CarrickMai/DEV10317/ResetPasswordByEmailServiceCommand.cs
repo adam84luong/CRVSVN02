@@ -48,39 +48,27 @@ namespace Payjr.Core.ServiceCommands.Authentication
 
         protected override bool OnExecute(AuthServiceResponse response)
         {
-            List<User> userinfo = User.SearchUsersByEmailAddress(_email);
-            try
-            {                                         
-                if (userinfo.Count == 1)
-                {
-                    if (userinfo[0].ResetPassword(null) && userinfo[0].Save(null))
-                    { 
-                            response.Status.IsSuccessful = true;
-                            response.Result = Result.Success;
-                            response.Data = userinfo[0].NewPassword;
-                            response.Status.ErrorMessage = string.Empty;
-                            return true;
-                    }                    
-                 }
-                 else
-                 {
-                      response.Status.ErrorMessage = String.Format("If you do not have an email account setup please contact your parent or customer service for help resetting your password");
-                 }            
-
-                Log.Info("Failure when trying to reset password by email:" + _email);                
-                response.Status.ErrorMessage = String.Format("ResetPasswordByEmail is failure");                
-                response.Status.IsSuccessful = false;
-                response.Result = Result.Error;
-                return false;
-            }
-            catch (Exception ex)
+            List<User> userinfo = User.SearchUsersByEmailAddress(_email);                                          
+            if (userinfo.Count == 1)
             {
-                Log.ErrorException("Error when trying to reset password by email:" + _email, ex);
-                response.Status.ErrorMessage = String.Format("Error when trying to reset password by email: email address: {0}, error message: {1}", _email, ex.Message);
-                response.Status.IsSuccessful = false;
-                response.Result = Result.Error;
-                return false;
+                if (userinfo[0].ResetPassword(null) && userinfo[0].Save(null))
+                { 
+                      response.Status.IsSuccessful = true;
+                      response.Result = Result.Success;
+                      response.Data = userinfo[0].NewPassword;
+                      response.Status.ErrorMessage = string.Empty;
+                      return true;
+                }                    
+            }
+            else
+            {
+                response.Status.ErrorMessage = String.Format("If you do not have an email account setup please contact your parent or customer service for help resetting your password");
             }            
-        }
+            Log.Info("Failure when trying to reset password by email:" + _email);                
+            response.Status.ErrorMessage = String.Format("ResetPasswordByEmail is failure");                
+            response.Status.IsSuccessful = false;
+            response.Result = Result.Error;
+            return false;
+        }            
     }
 }
