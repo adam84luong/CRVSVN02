@@ -17,7 +17,7 @@ namespace Payjr.Core.ServiceCommands.Authentication
 {
     public class ResetPasswordByEmailServiceCommand : ProviderServiceCommand<IProviderFactory, MetricRecorder, LocalRequest, AuthServiceResponse>
     {
-        private string _email;
+        private string _email ;
         
 
         public ResetPasswordByEmailServiceCommand(IProviderFactory providerFactory)
@@ -48,27 +48,27 @@ namespace Payjr.Core.ServiceCommands.Authentication
 
         protected override bool OnExecute(AuthServiceResponse response)
         {
-            List<User> userinfo = User.SearchUsersByEmailAddress(_email);                                          
+            List<User> userinfo = User.SearchUsersByEmailAddress(_email);
             if (userinfo.Count == 1)
             {
                 if (userinfo[0].ResetPassword(null) && userinfo[0].Save(null))
-                { 
-                      response.Status.IsSuccessful = true;
-                      response.Result = Result.Success;
-                      response.Data = userinfo[0].NewPassword;
-                      response.Status.ErrorMessage = string.Empty;
-                      return true;
-                }                    
+                {
+                    response.Status.IsSuccessful = true;
+                    response.Result = Result.Success;
+                    response.Data = userinfo[0].NewPassword; 
+                    response.Status.ErrorMessage = string.Empty;
+                    return true;
+                }
             }
             else
-            {
+            {             
+                Log.Info("Failure when trying to reset password by email:" + _email);
                 response.Status.ErrorMessage = String.Format("If you do not have an email account setup please contact your parent or customer service for help resetting your password");
-            }            
-            Log.Info("Failure when trying to reset password by email:" + _email);                
-            response.Status.ErrorMessage = String.Format("ResetPasswordByEmail is failure");                
-            response.Status.IsSuccessful = false;
-            response.Result = Result.Error;
-            return false;
+                response.Status.IsSuccessful = false;
+                response.Result = Result.Error;
+                return false;
+            }
+            return true;
         }            
     }
 }
