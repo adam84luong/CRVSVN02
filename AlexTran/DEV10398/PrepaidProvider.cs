@@ -114,10 +114,45 @@ namespace CardLab.CMS.Providers
             }
             return false;
         }
-
         public List<CardTransactionRecord> RetrieveCardTransactions(Guid applicationKey, string cardIdentifier, DateTime startDate, DateTime endDate, int pageNumber, int numberPerPage, out int totalRecord)
         {
-            throw new NotImplementedException();
+            var request = new RetrieveTransactionRequest
+            {
+                Configuration = new RetrievalConfigurationRecord
+                {
+                    ApplicationKey = applicationKey
+                },
+                Header = new RequestHeaderRecord
+                {
+                    CallerName = "CardLab.CMS.Providers.PrepaidProvider.RetrieveCardTransactions"
+                }
+            };
+            request.CardIdentifier = cardIdentifier;
+            request.StartDate = startDate;
+            request.EndDate = endDate;
+            request.NumberPerPage = numberPerPage;
+            request.PageNumber = pageNumber;
+
+            RetrieveTransactionResponse response;
+            try
+            {
+                response = CallService(() => CreateInstance().RetrieveCardTransactions(request.Configuration, request));
+            }
+            catch (Exception ex)
+            {
+                Log.ErrorException("An error occurred while processing PrepaidCard with CardIdentifier: " + cardIdentifier, ex);
+                totalRecord = 0;
+                return null;
+            }
+            if (response.Status.IsSuccessful)
+            {
+                totalRecord = response.TotalTransactions;
+                return response.CardTransactions;
+            }
+            Log.Error(String.Format("Failure when trying to RetrieveCardTransactions CardIdentifier {0}. Error: {1}", cardIdentifier, response.Status.ErrorMessage));
+            totalRecord = 0;
+            return null;
         }
+       
     }
 }

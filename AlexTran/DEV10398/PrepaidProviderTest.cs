@@ -27,6 +27,110 @@ namespace CardLab.CMS.Test.Providers
 
         #endregion
 
+
+        [TestMethod]
+        public void RetrieveTransactionSuccess_OneCard()
+        {
+            var response = new RetrieveTransactionResponse();
+            response.Status = new ResponseStatusRecord()
+            {
+                IsSuccessful = true
+            };
+            response.CardTransactions.Add(new CardTransactionRecord()
+            {
+                ActingUserIdentifier = "ActingUserIdentifier",
+                Amount = 5,
+                Date = DateTime.Now,
+                Description = "Description",
+                LongTransactionTypeDescription = "LongTransactionTypeDescription",
+                MerchantCategoryGroup = "1",
+                RunningBalance = 10,
+                ShortTransactionTypeDescription = "ShortTransactionTypeDescription",
+                TransactionNumber = "1102"
+            });
+            response.TotalTransactions = 1;
+      
+            PrepaidMock.Setup(mock =>
+                        mock.RetrieveCardTransactions(It.IsAny<RetrievalConfigurationRecord>(), It.IsAny<RetrieveTransactionRequest>())).Returns(response);
+
+            var target = new PrepaidProvider(ProviderFactory, PrepaidMock.Object);
+            int totalRecord;
+            List<CardTransactionRecord> result = target.RetrieveCardTransactions(new Guid(), "cardIdentifier", DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1), 0, 0, out totalRecord);
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual(1, result.Count);
+            Assert.AreEqual("ActingUserIdentifier", result[0].ActingUserIdentifier);
+        }
+        
+        [TestMethod]
+        public void RetrieveTransactionSuccess_ManyCard()
+        {
+            var response = new RetrieveTransactionResponse();
+            response.Status = new ResponseStatusRecord()
+            {
+                IsSuccessful = true
+
+            };
+            response.CardTransactions.Add(new CardTransactionRecord()
+            {
+                ActingUserIdentifier = "ActingUserIdentifier",
+                Amount = 5,
+                Date = DateTime.Now,
+                Description = "Description",
+                LongTransactionTypeDescription = "LongTransactionTypeDescription",
+                MerchantCategoryGroup = "1",
+                RunningBalance = 10,
+                ShortTransactionTypeDescription = "ShortTransactionTypeDescription",
+                TransactionNumber = "1102"
+            });
+
+            response.CardTransactions.Add(new CardTransactionRecord()
+            {
+                ActingUserIdentifier = "ActingUserIdentifier 2",
+                Amount = 10,
+                Date = DateTime.Now,
+                Description = "Description 2",
+                LongTransactionTypeDescription = "LongTransactionTypeDescription 2",
+                MerchantCategoryGroup = "2",
+                RunningBalance = 20,
+                ShortTransactionTypeDescription = "ShortTransactionTypeDescription 2",
+                TransactionNumber = "1103"
+            });
+            response.TotalTransactions = 2;
+            PrepaidMock.Setup(mock =>
+                        mock.RetrieveCardTransactions(It.IsAny<RetrievalConfigurationRecord>(), It.IsAny<RetrieveTransactionRequest>())).Returns(response);
+
+            var target = new PrepaidProvider(ProviderFactory, PrepaidMock.Object);
+            int totalRecord;
+            List<CardTransactionRecord> result = target.RetrieveCardTransactions(new Guid(), "cardIdentifier", DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1), 0, 0, out totalRecord);
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual("ActingUserIdentifier", result[0].ActingUserIdentifier);
+            Assert.AreEqual("ActingUserIdentifier 2", result[1].ActingUserIdentifier);
+        }
+
+        [TestMethod]
+        public void RetrieveTransactionSuccessFail()
+        {
+            var response = new RetrieveTransactionResponse();
+            response.Status = new ResponseStatusRecord()
+            {
+                IsSuccessful = false 
+            };
+            response.TotalTransactions = 0;
+        
+            PrepaidMock.Setup(mock =>
+                        mock.RetrieveCardTransactions(It.IsAny<RetrievalConfigurationRecord>(), It.IsAny<RetrieveTransactionRequest>())).Returns(response);
+
+            var target = new PrepaidProvider(ProviderFactory, PrepaidMock.Object);
+            int totalRecord;
+            List<CardTransactionRecord> result = target.RetrieveCardTransactions(new Guid(), "cardIdentifier", DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1), 1, 1, out totalRecord);
+
+            Assert.IsNull(result);       
+
+        }
+        
         [TestMethod]
         public void RetrieveCardDetaislByUserIdentifersSuccess_OneCard()
         {
