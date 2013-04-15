@@ -42,9 +42,12 @@ namespace Payjr.Core.Providers
             return site.PrepaidCreditProvider;
         }
 
-        public ICardProvider CreatePrepaidCardProvider(Site site)
+        public ICardProvider PrepaidCardProvider
         {
-            return site.PrepaidProvider;
+            get
+            {
+                return null;
+            }
         }
     }
 }

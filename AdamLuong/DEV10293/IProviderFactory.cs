@@ -14,6 +14,6 @@ namespace Payjr.Core.Providers
     {
         IErrorService ErrorService { get; }
         ICreditCardProvider CreateCreditCardProvider(Site site);
-        ICardProvider CreatePrepaidCardProvider(Site site);
+        ICardProvider PrepaidCardProvider { get; }
     }
 }

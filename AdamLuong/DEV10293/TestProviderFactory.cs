@@ -55,16 +55,6 @@ namespace Payjr.Core.Test.Providers
             return CreditCardProvider;
         }
 
-        public ICardProvider CreatePrepaidCardProvider(Site site)
-        {
-            if (RhinoMocks == null)
-            {
-                return site.PrepaidProvider;
-            }
-
-            return PrepaidCardProvider;
-        }
-
         public void SetupCreditCardProvider(Site site, bool wasSuccessful)
         {
             IGatewayReply reply = MockCreator.CreateMockIGatewayReply(RhinoMocks, null, wasSuccessful);
