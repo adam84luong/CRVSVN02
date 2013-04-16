@@ -12,7 +12,7 @@
         <span class="active-card-title">Activate card for <span id="_teenName" runat="server"></span>
         </span>
         <p class="active-card-desc">
-            Before the card can used it must be activated.
+            Before the card can used it must be activated.Please enter the full 16 digit card number and then your birth date.  If you have issues activating the card please call customer support at 214-618-7048.
         </p>
         <ul class="form-input">
             <li>
