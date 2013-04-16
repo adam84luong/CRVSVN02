@@ -56,7 +56,6 @@ namespace CardLab.CMS.Test.Providers
             var target = new PrepaidProvider(ProviderFactory, PrepaidMock.Object);
               List<CardTransactionRecord> result = target.RetrieveCardTransactions(new Guid(), "cardIdentifier", DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1), 0, 0);
 
-            Assert.IsNotNull(result);
             Assert.AreEqual(1, result.Count);
             Assert.AreEqual("ActingUserIdentifier", result[0].ActingUserIdentifier);
         }
@@ -102,7 +101,6 @@ namespace CardLab.CMS.Test.Providers
             var target = new PrepaidProvider(ProviderFactory, PrepaidMock.Object);
             List<CardTransactionRecord> result = target.RetrieveCardTransactions(new Guid(), "cardIdentifier", DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1), 0, 0);
 
-            Assert.IsNotNull(result);
             Assert.AreEqual(2, result.Count);
             Assert.AreEqual("ActingUserIdentifier", result[0].ActingUserIdentifier);
             Assert.AreEqual("ActingUserIdentifier 2", result[1].ActingUserIdentifier);
@@ -124,7 +122,7 @@ namespace CardLab.CMS.Test.Providers
             var target = new PrepaidProvider(ProviderFactory, PrepaidMock.Object);
             List<CardTransactionRecord> result = target.RetrieveCardTransactions(new Guid(), "cardIdentifier", DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1), 1, 1);
 
-            Assert.IsNull(result);       
+            Assert.AreEqual(0, result.Count);   
 
         }
         

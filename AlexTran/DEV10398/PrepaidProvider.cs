@@ -116,6 +116,7 @@ namespace CardLab.CMS.Providers
         }
         public List<CardTransactionRecord> RetrieveCardTransactions(Guid applicationKey, string cardIdentifier, DateTime startDate, DateTime endDate, int pageNumber, int numberPerPage)
         {
+            List<CardTransactionRecord> cardTransactionRecords = new List<CardTransactionRecord>() ;
             var request = new RetrieveTransactionRequest
             {
                 Configuration = new RetrievalConfigurationRecord
@@ -133,22 +134,24 @@ namespace CardLab.CMS.Providers
             request.NumberPerPage = numberPerPage;
             request.PageNumber = pageNumber;
 
-            RetrieveTransactionResponse response;
+            RetrieveTransactionResponse response= new RetrieveTransactionResponse ();
             try
             {
                 response = CallService(() => CreateInstance().RetrieveCardTransactions(request.Configuration, request));
             }
             catch (Exception ex)
             {
-                Log.ErrorException("An error occurred while processing PrepaidCard with CardIdentifier: " + cardIdentifier, ex);
-                return null;
+                Log.ErrorException("An error occurred while processing PrepaidCard with CardIdentifier: " + cardIdentifier, ex);                
             }
             if (response.Status.IsSuccessful)
-            {             
-                return response.CardTransactions;
+            {
+                cardTransactionRecords.AddRange(response.CardTransactions);                
             }
-            Log.Error(String.Format("Failure when trying to RetrieveCardTransactions CardIdentifier {0}. Error: {1}", cardIdentifier, response.Status.ErrorMessage));
-            return null;
+            else
+            {
+                Log.Error(String.Format("Failure when trying to RetrieveCardTransactions CardIdentifier {0}. Error: {1}", cardIdentifier, response.Status.ErrorMessage));
+            }
+            return cardTransactionRecords;
         }
        
     }
