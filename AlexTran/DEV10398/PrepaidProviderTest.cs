@@ -54,8 +54,7 @@ namespace CardLab.CMS.Test.Providers
                         mock.RetrieveCardTransactions(It.IsAny<RetrievalConfigurationRecord>(), It.IsAny<RetrieveTransactionRequest>())).Returns(response);
 
             var target = new PrepaidProvider(ProviderFactory, PrepaidMock.Object);
-            int totalRecord;
-            List<CardTransactionRecord> result = target.RetrieveCardTransactions(new Guid(), "cardIdentifier", DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1), 0, 0, out totalRecord);
+              List<CardTransactionRecord> result = target.RetrieveCardTransactions(new Guid(), "cardIdentifier", DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1), 0, 0);
 
             Assert.IsNotNull(result);
             Assert.AreEqual(1, result.Count);
@@ -101,8 +100,7 @@ namespace CardLab.CMS.Test.Providers
                         mock.RetrieveCardTransactions(It.IsAny<RetrievalConfigurationRecord>(), It.IsAny<RetrieveTransactionRequest>())).Returns(response);
 
             var target = new PrepaidProvider(ProviderFactory, PrepaidMock.Object);
-            int totalRecord;
-            List<CardTransactionRecord> result = target.RetrieveCardTransactions(new Guid(), "cardIdentifier", DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1), 0, 0, out totalRecord);
+            List<CardTransactionRecord> result = target.RetrieveCardTransactions(new Guid(), "cardIdentifier", DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1), 0, 0);
 
             Assert.IsNotNull(result);
             Assert.AreEqual(2, result.Count);
@@ -124,8 +122,7 @@ namespace CardLab.CMS.Test.Providers
                         mock.RetrieveCardTransactions(It.IsAny<RetrievalConfigurationRecord>(), It.IsAny<RetrieveTransactionRequest>())).Returns(response);
 
             var target = new PrepaidProvider(ProviderFactory, PrepaidMock.Object);
-            int totalRecord;
-            List<CardTransactionRecord> result = target.RetrieveCardTransactions(new Guid(), "cardIdentifier", DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1), 1, 1, out totalRecord);
+            List<CardTransactionRecord> result = target.RetrieveCardTransactions(new Guid(), "cardIdentifier", DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1), 1, 1);
 
             Assert.IsNull(result);       
 
