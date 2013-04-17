@@ -26,16 +26,13 @@ namespace Payjr.Core.Test.ServiceCommands.Authentication
                                   Configuration = new RetrievalConfigurationRecord { ApplicationKey = Guid.NewGuid() },
                                   Email = UserTestBase.EmailAddress
                               };
-            List<User> userinfo = User.SearchUsersByEmailAddress(request.Email);
 
             var target = new ResetPasswordByEmailServiceCommand(ProviderFactory);
             var result = target.Execute(request);
-            string newpassword = result.Data.ToString();
-            bool accountPasswordChange = userinfo[0].NotificationService.AccountPasswordChanged(userinfo[0].UserID);
+            string newpassword = result.Data.ToString();       
 
             Assert.IsTrue(result.Status.IsSuccessful, result.Status.ErrorMessage);
             Assert.IsNotNull(newpassword);
-            Assert.IsTrue(accountPasswordChange, result.Status.ErrorMessage);
             Assert.AreEqual(result.Result, Result.Success);
         }
 
