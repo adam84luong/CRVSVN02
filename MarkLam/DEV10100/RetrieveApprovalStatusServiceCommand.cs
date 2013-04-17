@@ -18,76 +18,39 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
 {
     public class RetrieveApprovalStatusServiceCommand : ProviderServiceCommandBase<RetrieveApprovalStatusRequest, RetrieveApprovalStatusResponse>
     {
-        //private IIdentityCheckProvider _identityCheckProvider;
         List<RetrieveApprovalStatusRecord> _listOfRetrieveApprovalStatusRecord;
         RetrievalConfigurationRecord _configuration;
      
-        private IMediaServiceProvider mediaServiceProvider;
-        private IIdentityCheckProvider identityCheckProvider;
         public RetrieveApprovalStatusServiceCommand(IProviderFactory providers) : base(providers)
         {
            
         }
 
-        public RetrieveApprovalStatusServiceCommand(IIdentityCheckProvider identityCheckerProvider,IMediaServiceProvider mediaServiceProvider, IProviderFactory providers) : base(providers)
-        { 
-            this.identityCheckProvider = identityCheckerProvider;
-            this.mediaServiceProvider = mediaServiceProvider;
-        }
-
         #region Properties
-        public IMediaServiceProvider MediaServiceProvider
-        {
-            get
-            {
-                return mediaServiceProvider;
-            }
-            set
-            {
-                this.mediaServiceProvider = value;
-            }
-        }
-        public IIdentityCheckProvider IdentityCheckProvider
-        {
-            get
-            {
-                return identityCheckProvider;
-            }
-            set
-            {
-                this.identityCheckProvider = value;
-            }
-        }
+       
         #endregion
         protected override bool OnExecute(RetrieveApprovalStatusResponse response)
         {
-            RetrieveApprovalStatusResponse result = new RetrieveApprovalStatusResponse() ;
+            //RetrieveApprovalStatusResponse result = new RetrieveApprovalStatusResponse() ;
           
             foreach (var reqRecord in _listOfRetrieveApprovalStatusRecord)
             {
                 List<ProductApprovalFulfillmentRecord> listProductApproval = new List<ProductApprovalFulfillmentRecord>(); 
                 foreach (var lineItem in reqRecord.LineItems)
                 {
-                    ProcessRetrieveApprovalStatus(lineItem.ProductRecords, out listProductApproval);
+                    ProcessRetrieveApprovalStatus(lineItem.Configuration.ApplicationKey, lineItem.ProductRecords, out listProductApproval);
                     if (listProductApproval.Count > 0)
                     {
-                        RetrieveApprovalStatusRecord retrieveApprovalStatusRecord = new RetrieveApprovalStatusRecord();
-                        ProductFulfillmentLineItem productFulfilmentLineItem = new  ProductFulfillmentLineItem
-                        {
-                            Configuration = lineItem.Configuration,
-                            LineItemIdentifier =lineItem.LineItemIdentifier,
-                        };
-                        this.UpdateProductApprovalFromProducctApproval(productFulfilmentLineItem.ProductRecords,listProductApproval);
-                        retrieveApprovalStatusRecord.LineItems.Add(productFulfilmentLineItem);
+                        RetrieveApprovalStatusResponseRecord retrieveApprovalStatusRecord = new RetrieveApprovalStatusResponseRecord();
+                        retrieveApprovalStatusRecord.ProductRecords.AddRange(listProductApproval);
+                        response.ResponseRecords.Add(retrieveApprovalStatusRecord);
                     }
                 }
             }
-            result.Status = new ResponseStatusRecord
+            response.Status = new ResponseStatusRecord
             {
                 ErrorMessage = string.Empty,
-                IsSuccessful = true
             };
-
             return true;
         }
 
@@ -95,10 +58,11 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
         {
             if (request == null)
             {
-                throw new ArgumentNullException("request", "request must be set");
+                throw new ArgumentNullException("request", "request must be set value");
             }
             ValidateForRequestRecords(request.RequestRecords);
             _listOfRetrieveApprovalStatusRecord = request.RequestRecords;
+            _configuration = request.Configuration;
                         
         }
 
@@ -107,14 +71,14 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
         {
             if (holdRequestRecords.Count == 0)
             {
-                throw new ArgumentException("RequestRecords must be set a value", "request.RequestRecords");
+                throw new ArgumentException("Request records must be set a value", "request.RequestRecords");
             }
 
             foreach (var requestRecord in holdRequestRecords)
             {
                 if (string.IsNullOrWhiteSpace(requestRecord.Ref1))
                 {
-                    throw new ArgumentNullException("request.Ref1", "Ref1 must be set a value");
+                    throw new ArgumentNullException("request.RequestRecords.Ref1", "Ref1 must be set a value");
                 }
                 //ignore Ref2--request.Ref2 is not require 
 
@@ -183,45 +147,45 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
             }
             if (string.IsNullOrWhiteSpace(productRecord.ProductName))
             {
-                throw new ArgumentNullException("request.LineItems.ProductRecords.ProductName", "Product name must be set value");
+                throw new ArgumentNullException("request.Line+Items.ProductRecords.ProductName", "Product name must be set value");
             }
             if (string.IsNullOrWhiteSpace(productRecord.ProductCode))
             {
                 throw new ArgumentNullException("request.LineItems.ProductRecords.ProductCode", "Product code must be set value");
             }
-            if (productRecord.Quantity <= 0)
-            {
-                throw new ArgumentNullException("request.LineItems.ProductRecords.Quantity", "Quantity must be positive number");
-            }
-            if (string.IsNullOrWhiteSpace(productRecord.ValueData))
-            {
-                throw new ArgumentNullException("request.LineItems.ProductRecords.ValueData", "Value data must be set value");
-            }
+            //if (productRecord.Quantity <= 0)
+            //{
+            //    throw new ArgumentNullException("request.LineItems.ProductRecords.Quantity", "Quantity must be positive number");
+            //}
+            //if (string.IsNullOrWhiteSpace(productRecord.ValueData))
+            //{
+            //    throw new ArgumentNullException("request.LineItems.ProductRecords.ValueData", "Value data must be set value");
+            //}
         }
         #endregion
 
         #region Process
 
-        public void ProcessRetrieveApprovalStatus(List<UpdateProductFulfillmentRecord> products, out List<ProductApprovalFulfillmentRecord> processedProducts)
+        public void ProcessRetrieveApprovalStatus(Guid applicationKey, List<UpdateProductFulfillmentRecord> products, out List<ProductApprovalFulfillmentRecord> processedProducts)
         {
             processedProducts = new List<ProductApprovalFulfillmentRecord>();
             
-            string identityCode = String.IsNullOrEmpty(SystemConfiguration.IdentityCheckProductCode)? null: SystemConfiguration.IdentityCheckProductCode.ToUpper();
-            string productCode = String.IsNullOrEmpty(SystemConfiguration.IdentityCheckProductCode) ? null : SystemConfiguration.IdentityCheckProductCode.ToUpper(); 
-
+            string identityCode = String.IsNullOrEmpty(SystemConfiguration.IdentityCheckProductCode)? null: SystemConfiguration.IdentityCheckProductCode;
+            string productCode = String.IsNullOrEmpty(SystemConfiguration.CardProductCode) ? null : SystemConfiguration.CardProductCode; 
+            //IMediaServiceProvider mediaServiceProvider = this.Providers.c
             foreach (var product in products)
             {
                 string productCodeTarget = product.ProductCode;
-
                 // Card Create Product Code
-                if (productCode.Equals(productCodeTarget, StringComparison.OrdinalIgnoreCase))
+                if (String.Equals(productCode,productCodeTarget, StringComparison.OrdinalIgnoreCase))
                 {
-                    processedProducts.Add(GetApprovalStatus(product, mediaServiceProvider));
+                    //processedProducts.Add(GetApprovalStatus(product, mediaServiceProvider));
+                    ///TODO:
                 }
                 // Identity Check Product Code
-                else if (String.Equals(identityCode, productCodeTarget))
+                else if (String.Equals(identityCode, productCodeTarget,StringComparison.OrdinalIgnoreCase))
                 {
-                    processedProducts.Add(CheckIdentity(product));
+                    processedProducts.Add(CheckIdentity(applicationKey, product));
                 }
                 else
                 {
@@ -267,11 +231,12 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
                 });
             }
         }
-       
-        private ProductApprovalFulfillmentRecord CheckIdentity(UpdateProductFulfillmentRecord product)
+
+        private ProductApprovalFulfillmentRecord CheckIdentity(Guid applicationKey, UpdateProductFulfillmentRecord product)
         {
             Log.Info("Processing approval for line item {0} with value ", product.LineItemIdentifier, product.Value);
-            IdentityCheckStatus status = identityCheckProvider.GetStatus(this._configuration.ApplicationKey.Value, product.Value);
+            var identityCheckProvider = Providers.CreateIdentityCheckProvider();
+            IdentityCheckStatus status = identityCheckProvider.GetStatus(applicationKey, product.Value);
             // the status never null
             return ProcessApprovalStatusForSingleProduct(product, status, null, null);
             
@@ -342,7 +307,6 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
                     record.IsApproved = null;
                     break;
             }
-
             return record;
         }
         #endregion
