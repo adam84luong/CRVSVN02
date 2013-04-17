@@ -6,6 +6,8 @@ using Payjr.Core.ServiceCommands;
 using Payjr.Core.ServiceCommands.Authentication;
 using Payjr.Core.Users;
 using System.Collections.Generic;
+using Payjr.Core.Jobs;
+using Payjr.Core.Adapters;
 
 namespace Payjr.Core.Test.ServiceCommands.Authentication
 {
@@ -25,14 +27,12 @@ namespace Payjr.Core.Test.ServiceCommands.Authentication
                               {
                                   Configuration = new RetrievalConfigurationRecord { ApplicationKey = Guid.NewGuid() },
                                   Email = UserTestBase.EmailAddress
-                              };
-
+                              };         
+            
             var target = new ResetPasswordByEmailServiceCommand(ProviderFactory);
-            var result = target.Execute(request);
-            string newpassword = result.Data.ToString();       
+            var result = target.Execute(request);          
 
-            Assert.IsTrue(result.Status.IsSuccessful, result.Status.ErrorMessage);
-            Assert.IsNotNull(newpassword);
+            Assert.IsTrue(result.Status.IsSuccessful);
             Assert.AreEqual(result.Result, Result.Success);
         }
 
