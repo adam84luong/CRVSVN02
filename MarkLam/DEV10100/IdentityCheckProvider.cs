@@ -16,10 +16,18 @@ namespace Payjr.Core.Providers
     {
 
 
-        public IdentityCheckProvider(IIdentityCheck identityCheckObj, IProviderFactory providerObj, MetricRecorder metricRecorderObj)
-            : base(providerObj, identityCheckObj)
-        {
+        public IdentityCheckProvider(IProviderFactory providerFactory)
+            : base(providerFactory)
+        {}
 
+        public IdentityCheckProvider(IProviderFactory providerFactory, string endpointConfigurationName)
+            : base(providerFactory, endpointConfigurationName)
+        {
+        }
+
+        public IdentityCheckProvider(IProviderFactory providerFactory, IIdentityCheck serviceOverride)
+            : base(providerFactory, serviceOverride)
+        {
         }
 
 
@@ -34,9 +42,7 @@ namespace Payjr.Core.Providers
 
             RetrievalConfigurationRecord configuration = new RetrievalConfigurationRecord();
             configuration.ApplicationKey = applicationKey;
-
-            IIdentityCheck service = CreateInstance();
-            RequestStatusResponse response = service.RequestStatus(configuration, request);
+            RequestStatusResponse response = CallService(() => CreateInstance().RequestStatus(configuration, request));
             RequestStatusResponseRecord responseRecord = null;
             if (response != null && response.Records.Count > 0)
                 responseRecord = response.Records[0];

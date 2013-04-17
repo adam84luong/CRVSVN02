@@ -7,16 +7,17 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Payjr.Core.Providers;
 using Common.Types;
+using Payjr.Core.Test.ServiceCommands;
 
 namespace Payjr.Core.Test.Providers
 {
     [TestClass()]
-    public class IdentityCheckProviderTest : Payjr.Core.Test.ServiceCommands.TestBase
+    public class IdentityCheckProviderTest : TestBase2
     {
         #region Additional test attributes
 
         [TestInitialize]
-        public override void MyTestInitialize()
+        public void MyTestInitialize()
         {
             base.MyTestInitialize();
         }
@@ -26,7 +27,7 @@ namespace Payjr.Core.Test.Providers
         #region function testing
 
         [TestMethod()]
-        public void GetStatusApprovalSuccessfulTest()
+        public void GetStatus_Approved_Successful()
         {
             var response = new RequestStatusResponse();
             string identityCheckUserIdentifier = "Test";
@@ -35,17 +36,14 @@ namespace Payjr.Core.Test.Providers
                                          IdentityCheckUserIdentifier = identityCheckUserIdentifier,
                                          Status = IdentityCheckStatus.Approved
                                      });
-            IdentityCheckMock.Setup(
-                mock => mock.RequestStatus(It.IsAny<RetrievalConfigurationRecord>(),
-                    It.IsAny<RequestStatusRequest>())).Returns(response);
-
-            var target = new IdentityCheckProvider(ProviderFactory, IdentityCheckMock.Object);
+            ProviderFactory.SetupIdentityCheck(response);
+            var target = new IdentityCheckProvider(ProviderFactory,ProviderFactory.CreateIdentityCheck());
             var result = target.GetStatus(new Guid(), identityCheckUserIdentifier);
-            Assert.Equals(result,IdentityCheckStatus.Approved);
+            Assert.AreEqual(result,IdentityCheckStatus.Approved);
         }
 
         [TestMethod()]
-        public void GetStatusDeniedSuccessfulTest()
+        public void GetStatus_Denied_Successful()
         {
             var response = new RequestStatusResponse();
             string identityCheckUserIdentifier = "Test";
@@ -54,17 +52,14 @@ namespace Payjr.Core.Test.Providers
                 IdentityCheckUserIdentifier = identityCheckUserIdentifier,
                 Status = IdentityCheckStatus.Denied
             });
-            IdentityCheckMock.Setup(
-                mock => mock.RequestStatus(It.IsAny<RetrievalConfigurationRecord>(),
-                    It.IsAny<RequestStatusRequest>())).Returns(response);
-
-            var target = new IdentityCheckProvider(ProviderFactory, IdentityCheckMock.Object);
+            ProviderFactory.SetupIdentityCheck(response);
+            var target = new IdentityCheckProvider(ProviderFactory, ProviderFactory.CreateIdentityCheck());
             var result = target.GetStatus(new Guid(), identityCheckUserIdentifier);
-            Assert.Equals(result, IdentityCheckStatus.Denied);
+            Assert.AreEqual(result, IdentityCheckStatus.Denied);
         }
 
         [TestMethod()]
-        public void GetStatusUnSuccessfulTest()
+        public void GetStatus_Fail_UnkownReturn()
         {
             var response = new RequestStatusResponse();
             string identityCheckUserIdentifier = "Test";
@@ -73,13 +68,11 @@ namespace Payjr.Core.Test.Providers
                 IdentityCheckUserIdentifier = identityCheckUserIdentifier,
                 Status = IdentityCheckStatus.Unknown
             });
-            IdentityCheckMock.Setup(
-                mock => mock.RequestStatus(It.IsAny<RetrievalConfigurationRecord>(),
-                    It.IsAny<RequestStatusRequest>())).Returns(response);
-
-            var target = new IdentityCheckProvider(ProviderFactory, IdentityCheckMock.Object);
+            ProviderFactory.SetupIdentityCheck(response);
+            var target = new IdentityCheckProvider(ProviderFactory,ProviderFactory.CreateIdentityCheck());
+           
             var result = target.GetStatus(new Guid(), identityCheckUserIdentifier);
-            Assert.Equals(result, IdentityCheckStatus.Approved);
+            Assert.AreEqual(result, IdentityCheckStatus.Unknown);
         }
         #endregion
     }
