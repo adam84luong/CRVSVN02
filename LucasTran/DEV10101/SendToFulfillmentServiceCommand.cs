@@ -15,30 +15,31 @@ using System.Threading.Tasks;
 using Common.Business.Validation;
 using Payjr.Types;
 using Payjr.Core.Services;
+using Payjr.Core.Jobs;
 
 
 namespace Payjr.Core.ServiceCommands.ProductFulfillment
 {
     public class SendToFulfillmentServiceCommand : ProviderServiceCommandBase<SendToFulfillmentRequest,SendToFulfillmentResponse>
     {
-        List<SendToFulfillmentRecord> _fulfillmentRecords = new List<SendToFulfillmentRecord>();
+        private List<SendToFulfillmentRecord> _fulfillmentRecords;
 
         public SendToFulfillmentServiceCommand(IProviderFactory providers) : base(providers) { }
 
         protected override bool OnExecute(SendToFulfillmentResponse response)
         {
-            //Payjr.Entity.EntityClasses.UserEntity
             Teen teen;
             Guid user;
             PrepaidCardAccount prepaidAccount;
+            CreateCardJob createCardJob;
             foreach (SendToFulfillmentRecord record in _fulfillmentRecords)
             {
                 user = new UserIdentifier(record.UserIdentifier).ID;
                 teen = User.RetrieveUser(user) as Teen;
-                //ServiceFactory.UserConfiguration.AssignProductToUser(Product.PPaid_IC, teen);
+                bool success1 = teen.Save(null);
                 prepaidAccount = teen.NewPrepaidCardAccount();
-                //prepaidAccount.IsActive = true;
-                teen.Save(null);
+                // createCardJob = (CreateCardJob)Job.RetrieveJob(prepaidAccount.CardCreateJob.JobID); //??????
+                //bool success2 = prepaidAccount.Save(null);//????????????
                 response.ResponseRecords.Add(record);
             }
             
@@ -47,6 +48,7 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
 
         protected override void Validate(SendToFulfillmentRequest request)
         {
+            Log.Debug("Beginning validate the request");
             if (request == null)
             {
                 throw new ValidationException("request must be set");
@@ -57,23 +59,28 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
             {
                 throw new ValidationException("request.RequestRecords must not be null or empty");
             }
-            SendToFulfillmentRecord r = new SendToFulfillmentRecord();
 
-            int i = 0;
+            _fulfillmentRecords = new List<SendToFulfillmentRecord>();
+            var pos = -1;
+            var count = 0;
             foreach (SendToFulfillmentRecord record in sendToFulfillmentRecords)
             {
+                pos++;
                 var productFulfillmentLineItems = record.ProductLineItems;
                 if (productFulfillmentLineItems.Count == 0)
                 {
-                    throw new ValidationException(string.Format("request.RequestRecords[{0}].ProductLineItems must not be null or empty", i));
+                    Log.Debug("skiped request.RequestRecords[{0}] because ProductLineItems must be set", pos);
+                    continue;
                 }
                 if (string.IsNullOrWhiteSpace(record.UserIdentifier))
                 {
-                    throw new ArgumentException(string.Format("request.RequestRecords[{0}].UserIdentifier must be set",i));
+                    Log.Debug("skiped request.RequestRecords[{0}] because UserIdentifier must not be null or empty", pos);
+                    continue;
                 }
-                i++;
                 _fulfillmentRecords.Add(record);
+                count++;
             }
+            Log.Debug("Ending validate the request. {0}/{1} record(s) passed validation", count, request.RequestRecords.Count);
         }
     }
 }
