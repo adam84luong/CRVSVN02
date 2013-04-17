@@ -12,6 +12,7 @@ using Payjr.Core.Metrics;
 using Common.Contracts.Authentication.Requests;
 using Payjr.Entity.EntityClasses;
 using Payjr.Core.Users;
+using Payjr.Core.Jobs;
 
 namespace Payjr.Core.ServiceCommands.Authentication
 {
@@ -53,9 +54,15 @@ namespace Payjr.Core.ServiceCommands.Authentication
             {
                 if (userinfo[0].ResetPassword(null) && userinfo[0].Save(null))
                 {         
-                    response.Result = Result.Success;
-                    response.Data = userinfo[0].NewPassword;
-                    response.Status.IsSuccessful = userinfo[0].NotificationService.AccountPasswordChanged(userinfo[0].UserID);
+                    response.Result = Result.Success;                  
+                    if( userinfo[0].NotificationService.AccountPasswordChanged(userinfo[0].UserID))
+                    {
+                          List<NotificationJob> job = NotificationJob.RetrieveNotificationJobsByUser(userinfo[0].UserID);
+                          if (job.Count == 1)		
+                          {
+                                 response.Status.IsSuccessful =true;
+                          }
+                     }
                 }
             }
             else
