@@ -31,31 +31,31 @@ namespace CMSApp.Controls.Buxx.Account {
         protected global::Telerik.Web.UI.RadScriptManager RadScriptManager1;
         
         /// <summary>
-        /// RadAjaxLoadingPanel1 control.
+        /// RadAjaxManager1 control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::Telerik.Web.UI.RadAjaxLoadingPanel RadAjaxLoadingPanel1;
+        protected global::Telerik.Web.UI.RadAjaxManager RadAjaxManager1;
         
         /// <summary>
-        /// RadAjaxPanel1 control.
+        /// _comboDate control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::Telerik.Web.UI.RadAjaxPanel RadAjaxPanel1;
+        protected global::Telerik.Web.UI.RadComboBox _comboDate;
         
         /// <summary>
-        /// _transactionGrid control.
+        /// _transactionView control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::Telerik.Web.UI.RadGrid _transactionGrid;
+        protected global::Telerik.Web.UI.RadListView _transactionView;
         
         /// <summary>
         /// _radDataPager control.

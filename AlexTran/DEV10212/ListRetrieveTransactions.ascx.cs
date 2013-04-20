@@ -12,12 +12,13 @@ namespace CMSApp.Controls.Buxx.Account
 {
     public partial class ListRetrieveTransactions : BuxxBaseControl
     {
+        List<DateTime> _startDates = new List<DateTime>();
+        List<DateTime> _endDates = new List<DateTime>();
         protected void Page_Load(object sender, EventArgs e)
         {
-            _transactionGrid.PageSize = NumberPerPage;
-        }   
+         }   
 
-         #region Properties
+        #region Properties
 
         public TeenUser Teen
         {
@@ -56,7 +57,7 @@ namespace CMSApp.Controls.Buxx.Account
             {
                 if (ViewState["StartDate"] == null)
                 {
-                    ViewState["StartDate"] = EndDate.AddDays(-10);
+                    ViewState["StartDate"] = DateTime.Now.AddMonths(-1).Date;
                 }
                 return (DateTime)ViewState["StartDate"];
             }
@@ -88,7 +89,7 @@ namespace CMSApp.Controls.Buxx.Account
             {
                 if (ViewState["PageNumber"] == null)
                 {
-                    ViewState["PageNumber"]= _radDataPager.CurrentPageIndex;
+                    ViewState["PageNumber"]= 1;
                 }
                 return (int)ViewState["PageNumber"];
             }
@@ -105,7 +106,7 @@ namespace CMSApp.Controls.Buxx.Account
             {
                 if (ViewState["NumberPerPage"] == null)
                 {
-                    ViewState["NumberPerPage"] = _radDataPager.PageSize;
+                    ViewState["NumberPerPage"] = 5;
                 }
                 return (int)ViewState["NumberPerPage"];
             }
@@ -114,66 +115,105 @@ namespace CMSApp.Controls.Buxx.Account
                 ViewState["NumberPerPage"] = value;
             }
         }
+        public int TotalRecords
+        {
+            get
+            {
+                if (ViewState["RecordTotal"] == null)
+                {
+                    ViewState["RecordTotal"] = 0;
+                }
+                return (int)ViewState["RecordTotal"];
+            }
+            private set
+            {
+                ViewState["RecordTotal"] = value;
+            }
+        }
           #endregion
 
         #region Public Method
         public void BindControl(TeenUser teen)
            {
             Teen = teen;
-            _teenName.Text = teen.FullName + "' Transactions";
-            NumberPerPage = _radDataPager.PageSize;
-            PageNumber= _radDataPager.CurrentPageIndex;
+            _teenName.Text = teen.FullName + "' Transactions";          
+            BinComboDate(DateTime.Now.AddYears(-1).Date, DateTime.Now.Date);
+            StartDate = _startDates[0].Date;
+            EndDate = _endDates[0].Date;
             CardIdentifier = teen.PrepaidCard.PrepaidCardIdentifier;
-            StartDate = DateTime.Today.AddDays(-10);
-            EndDate = DateTime.Today.AddDays(10);
-            BinRadGrid(teen);
-            _transactionGrid.DataBind();   
-        }
-    
-        #endregion
-        #region Grid Event
-        protected void BinRadGrid(TeenUser teen)
-        {
-           var cardTransactionRecord = teen.ProviderFactory.Prepaid.RetrieveCardTransactions(ApplicationKey, CardIdentifier, StartDate, EndDate, PageNumber, NumberPerPage);
-          _transactionGrid.PageSize = NumberPerPage;
-          _transactionGrid.CurrentPageIndex = PageNumber;
-          _transactionGrid.DataSource = cardTransactionRecord;           
-        }
-        protected void TransactionNeedDataSource(object source, GridNeedDataSourceEventArgs e)
-        {
-            BinRadGrid(Teen);
-            _transactionGrid.Rebind(); 
+            PageNumber = _radDataPager.CurrentPageIndex;
+            NumberPerPage = _radDataPager.PageSize;
+            BinGrid(teen);         
+            _transactionView.DataBind();   
         }
 
-        protected void TransactionItemDataBound(object sender, GridItemEventArgs e)
+        public void BinGrid(TeenUser teen)
         {
-            if (e.Item.ItemType == GridItemType.Item || e.Item.ItemType == GridItemType.AlternatingItem)
+            int totalRecord;
+            var cardTransactionRecord = teen.ProviderFactory.Prepaid.RetrieveCardTransactions(ApplicationKey, CardIdentifier, StartDate, EndDate, PageNumber, NumberPerPage, out totalRecord);
+            TotalRecords = totalRecord;
+            _transactionView.PageSize = NumberPerPage;
+            _transactionView.DataSource = cardTransactionRecord;
+        }
+
+        public void BinComboDate(DateTime startDate, DateTime endDate)
+        {
+            DateTime startdatetemp = startDate;
+            DateTime enddatetemp = endDate;
+            RadComboBoxItem item;
+            int i = 0;
+            while (DateTime.Compare(startDate, enddatetemp) <= 0)
             {
-
+                startdatetemp = enddatetemp.AddMonths(-1);
+                _endDates.Add(enddatetemp);
+                _startDates.Add(startdatetemp);
+                enddatetemp = startdatetemp.AddDays(-1);
+                if (i == 0)
+                {
+                    item = new RadComboBoxItem("Current Statement " + _startDates[i].ToShortDateString() + " to " + _endDates[i].ToShortDateString(), i.ToString());
+                }
+                else
+                {
+                    item = new RadComboBoxItem(_startDates[i].ToShortDateString() + " to " + _endDates[i].ToShortDateString(), i.ToString());
+                }
+                _comboDate.Items.Add(item);
+                i++;
             }
         }
+        #endregion
+                  
+        #region Page event
+        protected void _PageIndexChanged(object sender, RadDataPagerPageIndexChangeEventArgs e)
+        {
+            PageNumber = e.NewPageIndex;
+            BinGrid(Teen);
+            _transactionView.Rebind();
+        }     
+        
+        protected void PerPage_SelectedIndexChanged(object sender, Telerik.Web.UI.RadComboBoxSelectedIndexChangedEventArgs e)
+        {
+            NumberPerPage = Int32.Parse(e.Value);
+            _radDataPager.PageSize = NumberPerPage;
+            PageNumber = 1;
+            BinGrid(Teen);
+            _transactionView.Rebind();
+        }
 
+        protected void _OnTotalRowCountRequest(object sender, RadDataPagerTotalRowCountRequestEventArgs e)
+        {
+            e.TotalRowCount = TotalRecords;
+        }
+
+        protected void _comboDate_SelectedIndexChanged(object sender, RadComboBoxSelectedIndexChangedEventArgs e)
+        {
+            StartDate = _startDates[Int32.Parse(_comboDate.SelectedValue)].Date;
+            EndDate = _endDates[Int32.Parse(_comboDate.SelectedValue)].Date;
+            PageNumber = 1;
+            BinGrid(Teen);
+            _transactionView.Rebind();
+        }
         #endregion
         
-        #region Page event
-      
-        protected void SearchResultPageIndexChanged(object sender, RadDataPagerPageIndexChangeEventArgs e)
-        {         
-            PageNumber = e.NewPageIndex;
-            BinRadGrid(Teen);
-            _transactionGrid.Rebind(); 
-        }
-        protected void SearchResultPagerCommand(object sender, RadDataPagerCommandEventArgs e)
-        {
-            if (e.CommandName == "PageSize")
-            {
-                NumberPerPage = Convert.ToInt32(e.CommandArgument);
-                PageNumber = 1;
-                BinRadGrid(Teen);
-                _transactionGrid.Rebind(); 
-            }
-        }
-        #endregion
     }
 
 
