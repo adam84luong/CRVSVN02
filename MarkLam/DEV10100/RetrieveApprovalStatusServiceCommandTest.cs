@@ -57,7 +57,7 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
                     Assert.IsTrue(item.IsApproved.Value);
             }
         }
-           
+
 
         [TestMethod]
         public void Execute_IdentityCheck_Sucessful_Denied()
@@ -122,16 +122,18 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
             Assert.AreEqual("Request records must be set a value\r\nParameter name: request.RequestRecords", result.Status.ErrorMessage);
         }
         [TestMethod]
-        public void Execute_Failure_RequestWithoutRef1Value()
+        public void Execute_Failure_RequestWithoutProductCodeValue()
         {
             RetrieveApprovalStatusRequest request = CreateRetrieveApprovalStatusRequest(true);
-            request.RequestRecords[0].Ref1 = string.Empty;
+            request.RequestRecords[0].LineItems[0].ProductRecords[2].ProductCode = string.Empty;
             var target = new RetrieveApprovalStatusServiceCommand(ProviderFactory);
+            IdentityCheckStatus expectedRespone = IdentityCheckStatus.Approved;
+            ProviderFactory.SetupIdentityCheckProvider(expectedRespone);
             var result = target.Execute(request);
-            Assert.AreEqual(0, result.ResponseRecords.Count);
             Assert.IsNotNull(result.Status);
-            Assert.IsFalse(result.Status.IsSuccessful);
-            Assert.AreEqual("Ref1 must be set a value\r\nParameter name: request.RequestRecords.Ref1", result.Status.ErrorMessage);
+            Assert.IsTrue(result.Status.IsSuccessful);
+            int count = CountIdentityCheckSuccess(result);
+            Assert.AreEqual(0, count);
         }
         [TestMethod]
         public void Execute_Failure_IsEmptyApplicationKeyInLineItem()
@@ -140,13 +142,71 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
             request.RequestRecords[0].LineItems[0].Configuration.ApplicationKey = Guid.Empty;
             var target = new RetrieveApprovalStatusServiceCommand(ProviderFactory);
             var result = target.Execute(request);
-            Assert.AreEqual(0, result.ResponseRecords.Count);
             Assert.IsNotNull(result.Status);
-            Assert.IsFalse(result.Status.IsSuccessful);
-            Assert.AreEqual("Application key must be set a value\r\nParameter name: LineItems.Configuration.ApplicationKey", result.Status.ErrorMessage);
+            Assert.IsTrue(result.Status.IsSuccessful);
+            Assert.AreEqual(0, result.ResponseRecords.Count);
+        }
+
+        [TestMethod]
+        public void Execute_IdentityCheck_Sucessful_With2ApprovalStatusRecord_2Approved()
+        {
+            RetrieveApprovalStatusRequest _request = CreateRetrieveApprovalStatusRequest(true);
+            //add 1 more RetrieveApprovalStatusRecord
+            RetrieveApprovalStatusRecord approvalRecord = new RetrieveApprovalStatusRecord();
+            approvalRecord.Ref1 = "Ref2";
+            approvalRecord.LineItems.AddRange(GetProductFulfilmentLineItems());
+            _request.RequestRecords.Add(approvalRecord);
+            //----------------------
+            IdentityCheckStatus expectedRespone = IdentityCheckStatus.Approved;
+            var target = new RetrieveApprovalStatusServiceCommand(ProviderFactory);
+            ProviderFactory.SetupIdentityCheckProvider(expectedRespone);
+
+            var result = target.Execute(_request);
+            Assert.IsNotNull(result.Status);
+            Assert.IsTrue(result.Status.IsSuccessful);
+            Assert.AreEqual(2, result.ResponseRecords.Count);
+            int count = CountIdentityCheckSuccess(result);
+            Assert.AreEqual(2, count);
+        }
+
+       
+        [TestMethod]
+        public void Execute_IdentityCheck_Sucessful_With2ApprovalStatusRecord_1Approved()
+        {
+            RetrieveApprovalStatusRequest _request = CreateRetrieveApprovalStatusRequest(true);
+            //add 1 more RetrieveApprovalStatusRecord
+            RetrieveApprovalStatusRecord approvalRecord = new RetrieveApprovalStatusRecord();
+            approvalRecord.Ref1 = "Ref2";
+            approvalRecord.LineItems.AddRange(GetProductFulfilmentLineItems());
+            _request.RequestRecords.Add(approvalRecord);
+            _request.RequestRecords[1].LineItems[0].Configuration.ApplicationKey = Guid.Empty;
+            //----------------------
+            IdentityCheckStatus expectedRespone = IdentityCheckStatus.Approved;
+            var target = new RetrieveApprovalStatusServiceCommand(ProviderFactory);
+            ProviderFactory.SetupIdentityCheckProvider(expectedRespone);
+
+            var result = target.Execute(_request);
+            Assert.IsNotNull(result.Status);
+            Assert.IsTrue(result.Status.IsSuccessful);
+            Assert.AreEqual(1, result.ResponseRecords.Count);
+            int count = CountIdentityCheckSuccess(result);
+            Assert.AreEqual(1, count);
         }
         #region Helper
 
+        private static int CountIdentityCheckSuccess(Common.Contracts.ProductFulfillment.Responses.RetrieveApprovalStatusResponse result)
+        {
+            int count = 0;
+            foreach (var rasrItem in result.ResponseRecords)
+            {
+                foreach (ProductApprovalFulfillmentRecord item in rasrItem.ProductRecords)
+                {
+                    if (item.ProductCode == SystemConfiguration.IdentityCheckProductCode && item.IsApproved == true)
+                        count++;
+                }
+            }
+            return count;
+        }
         private RetrieveApprovalStatusRequest CreateRetrieveApprovalStatusRequest(bool isInit)
         {
             var result = new RetrieveApprovalStatusRequest
@@ -228,55 +288,6 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
             return result;
         }
         
-        private FsvcardProviderEntity GetProviderEntity()
-        {
-            using (DataAccessAdapter adapter = new DataAccessAdapter())
-            {
-                EntityCollection<FsvcardProviderEntity> provEntity = new EntityCollection<FsvcardProviderEntity>(new FsvcardProviderEntityFactory());
-
-                IPrefetchPath2 path = new PrefetchPath2((int)EntityType.ProviderEntity);
-                path.Add(FsvcardProviderEntity.PrefetchPathPrepaidModules);
-                path.Add(FsvcardProviderEntity.PrefetchPathProviderNetworkConfig);
-
-                IRelationPredicateBucket bucket = new RelationPredicateBucket();
-                bucket.Relations.Add(FsvcardProviderEntity.Relations.PrepaidModuleEntityUsingDestinationProviderId);
-                bucket.Relations.Add(FsvcardProviderEntity.Relations.ProviderNetworkConfigEntityUsingProviderNetworkConfigId);
-                //bucket.PredicateExpression.Add(PrepaidModuleFields.BrandingId == _branding.BrandingId);
-                adapter.FetchEntityCollection(provEntity, bucket, path);
-                if (provEntity.Count > 0)
-                {
-                    return provEntity[0];
-                }
-                else
-                {
-                    return null;
-                }
-            }
-        }
-
-        private void CreatePrepaidAccount(Teen user, bool isActive, PrepaidCardStatus status)
-        {
-            using (DataAccessAdapter adapter = new DataAccessAdapter(true))
-            {
-                PrepaidCardAccountEntity prepaidCard = new PrepaidCardAccountEntity();
-                prepaidCard.ActivationMethod = PrepaidActivationMethod.unknown;
-                prepaidCard.Active = isActive;
-                prepaidCard.ActiveteDateTime = null;
-                prepaidCard.BrandingCardDesignId = null;
-                prepaidCard.CardIdentifier = null;
-                prepaidCard.CardNumber = "213156484984651";
-                prepaidCard.LostStolenDateTime = null;
-                prepaidCard.MarkedForDeletion = false;
-                prepaidCard.Status = status;
-                prepaidCard.UserCardDesignId = null;
-
-                PrepaidCardAccountUserEntity prepaidCardUser = new PrepaidCardAccountUserEntity();
-                prepaidCardUser.UserId = user.UserID;
-                prepaidCardUser.PrepaidCardAccount = prepaidCard;
-                adapter.SaveEntity(prepaidCardUser);
-            }
-        }
-
         #endregion
     }
 }

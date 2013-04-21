@@ -27,8 +27,8 @@ namespace Payjr.Core.Test.Providers
         public ICreditCardProvider CreditCardProvider { get; set; }
         public ICardProvider PrepaidCardProvider { get; set; }
 
-        private IIdentityCheck _identityCheck; //used to test identity check provider
-        private IIdentityCheckProvider _identityCheckProvider;
+        public IIdentityCheck IdentityCheck { get; set; } //used to test identity check provider
+        public IIdentityCheckProvider IdentityCheckProvider { get; set; }
        
         public int CacheDuration
         {
@@ -92,21 +92,12 @@ namespace Payjr.Core.Test.Providers
             PrepaidCardProvider = ppProviderMock;
         }
 
-        public IIdentityCheckProvider CreateIdentityCheckProvider()
-        {
-            return _identityCheckProvider;
-        }
-
+       
         public void SetupIdentityCheckProvider(IdentityCheckStatus expectedResponse )
         {
             IIdentityCheckProvider ccProviderMock = MockCreator.CreateMockIIdentityCheckProviderForGetStatusWithValueReturnByStatus(RhinoMocks,expectedResponse);
             RhinoMocks.Replay(ccProviderMock);
-            _identityCheckProvider = ccProviderMock;
-        }
-
-        public IIdentityCheck CreateIdentityCheck()
-        {
-            return _identityCheck;
+            this.IdentityCheckProvider = ccProviderMock;
         }
 
         public void SetupIdentityCheck(RequestStatusResponse expectedResponse)
@@ -115,7 +106,7 @@ namespace Payjr.Core.Test.Providers
             RMock.Expect.Call(
                 providerMock.RequestStatus(It.IsAny<RetrievalConfigurationRecord>(), It.IsAny<RequestStatusRequest>())).IgnoreArguments().Return(expectedResponse).Repeat.Any();
             RhinoMocks.Replay(providerMock);
-            _identityCheck = providerMock;
+            IdentityCheck = providerMock;
         }
         
     }

@@ -3,10 +3,12 @@ using Common.Contracts.ProductFulfillment.Records;
 using Common.Contracts.ProductFulfillment.Requests;
 using Common.Contracts.ProductFulfillment.Responses;
 using Common.Contracts.Shared.Records;
+using Common.Exceptions;
 using Common.Types;
 using Payjr.Core.Configuration;
 using Payjr.Core.Providers;
 using Payjr.Core.Providers.Interfaces;
+using Payjr.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,7 +40,8 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
                 List<ProductApprovalFulfillmentRecord> listProductApproval = new List<ProductApprovalFulfillmentRecord>(); 
                 foreach (var lineItem in reqRecord.LineItems)
                 {
-                    ProcessRetrieveApprovalStatus(lineItem.Configuration.ApplicationKey, lineItem.ProductRecords, out listProductApproval);
+                    if ( lineItem.Configuration.ApplicationKey != null && lineItem.Configuration.ApplicationKey != Guid.Empty)
+                        ProcessRetrieveApprovalStatus(lineItem.Configuration.ApplicationKey, lineItem.ProductRecords, out listProductApproval);
                     if (listProductApproval.Count > 0)
                     {
                         RetrieveApprovalStatusResponseRecord retrieveApprovalStatusRecord = new RetrieveApprovalStatusResponseRecord();
@@ -47,10 +50,6 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
                     }
                 }
             }
-            response.Status = new ResponseStatusRecord
-            {
-                ErrorMessage = string.Empty,
-            };
             return true;
         }
 
@@ -67,100 +66,73 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
         }
 
         #region Validate
-        private static void ValidateForRequestRecords(List<RetrieveApprovalStatusRecord> holdRequestRecords)
+        private void ValidateForRequestRecords(List<RetrieveApprovalStatusRecord> holdRequestRecords)
         {
             if (holdRequestRecords.Count == 0)
             {
                 throw new ArgumentException("Request records must be set a value", "request.RequestRecords");
             }
-
+            int index = 0;
             foreach (var requestRecord in holdRequestRecords)
             {
-                if (string.IsNullOrWhiteSpace(requestRecord.Ref1))
-                {
-                    throw new ArgumentNullException("request.RequestRecords.Ref1", "Ref1 must be set a value");
-                }
-                //ignore Ref2--request.Ref2 is not require 
-
                 var holdLineItems = requestRecord.LineItems;
                 if (holdLineItems.Count == 0)
                 {
-                    throw new ArgumentNullException("request.LineItems", "Line items must be set value");
+                    Log.Error("request.RequestRecords[{0}].LineItems must be set value", index);
+                    continue;
                 }
+                int cIndex = 0;
                 foreach (var holdLineItem in holdLineItems)
                 {
-                    CheckLineItem(holdLineItem);
+                    CheckLineItem(holdLineItem,index,cIndex);
+                    cIndex++;
                 }
-
+                index++;
             }
         }
 
-        private static void CheckLineItem(ProductFulfillmentLineItem holdLineItem)
+        private void CheckLineItem(ProductFulfillmentLineItem holdLineItem,int pIndex,int cIndex)
         {
-            if (string.IsNullOrWhiteSpace(holdLineItem.LineItemIdentifier))
-            {
-                throw new ArgumentNullException("LineItems.LineItemIdentifier", "Line item identifier must be set a value");
-            }
-            //check Configuration
-            if (holdLineItem.Configuration == null)
-            {
-                throw new ArgumentNullException("LineItems.Configuration", "Configuration must be set a value");
-            }
-
             var config = holdLineItem.Configuration;
             if (config.ApplicationKey == null || config.ApplicationKey == Guid.Empty)
             {
-                throw new ArgumentNullException("LineItems.Configuration.ApplicationKey", "Application key must be set a value");
+                Log.Error("request.RequestRecords[{0}].LineItems[{1}].Configuration.ApplicationKey must be set value not null or empty", pIndex, cIndex);
+                return;
             }
 
-            if (config.SystemConfiguration == null || config.SystemConfiguration == Guid.Empty)
-            {
-                throw new ArgumentNullException("LineItems.Configuration.SystemConfiguration", "System Configuration must be set a value");
-            }
-            if (config.TenantKey == null || config.TenantKey == Guid.Empty)
-            {
-                throw new ArgumentNullException("LineItems.Configuration.TenantKey", "Tenant Key must be set a value");
-            }
-            if (config.TenantKey == null || config.ApplicationKey == Guid.Empty)
-            {
-                throw new ArgumentNullException("LineItems.Configuration", "Configuration must be set a value");
-            }
             //---------------------------------------------------------
             //check  ProductRecords
             var holdProductRecords = holdLineItem.ProductRecords;
             if (holdProductRecords.Count == 0)
             {
-                throw new ArgumentNullException("request.LineItems.ProductRecords", "Product record must be set value");
+                Log.Error("request.RequestRecords[{0}].LineItems[{1}].ProductRecords must be set value not null or empty", pIndex, cIndex);
+                return;
             }
-
+            int index = 0;
             foreach (var productRecord in holdProductRecords)
             {
-                CheckProductCode(productRecord);
+                CheckProductCode(productRecord,pIndex,cIndex, index);
+                index++;
             }
         }
 
-        private static void CheckProductCode(UpdateProductFulfillmentRecord productRecord)
+        private void CheckProductCode(UpdateProductFulfillmentRecord productRecord, int pIndex, int pIndex2, int cIndex)
         {
-            if (string.IsNullOrWhiteSpace(productRecord.LineItemIdentifier))
-            {
-                throw new ArgumentNullException("request.LineItems.ProductRecords.LineItemIdentifier", "LineItem Identifier record must be set value");
-            }
             if (string.IsNullOrWhiteSpace(productRecord.ProductName))
             {
-                throw new ArgumentNullException("request.Line+Items.ProductRecords.ProductName", "Product name must be set value");
+                Log.Error("request.RequestRecords[{0}].LineItems[{1}].ProductRecords[{2}].ProductName must be set value not null or empty", pIndex, pIndex2, cIndex);
+                return;
             }
             if (string.IsNullOrWhiteSpace(productRecord.ProductCode))
             {
-                throw new ArgumentNullException("request.LineItems.ProductRecords.ProductCode", "Product code must be set value");
+                Log.Error("request.RequestRecords[{0}].LineItems[{1}].ProductRecords[{2}].ProductCode must be set value not null or empty", pIndex, pIndex2, cIndex);
+                return;
             }
-            //if (productRecord.Quantity <= 0)
-            //{
-            //    throw new ArgumentNullException("request.LineItems.ProductRecords.Quantity", "Quantity must be positive number");
-            //}
-            //if (string.IsNullOrWhiteSpace(productRecord.ValueData))
-            //{
-            //    throw new ArgumentNullException("request.LineItems.ProductRecords.ValueData", "Value data must be set value");
-            //}
+            if (string.IsNullOrWhiteSpace(productRecord.Value))
+            {
+                Log.Error("request.RequestRecords[{0}].LineItems[{1}].ProductRecords[{2}].ProductCode must be set value not null or empty", pIndex, pIndex2, cIndex);
+                return;
+            }
         }
         #endregion
 
@@ -175,21 +147,24 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
             //IMediaServiceProvider mediaServiceProvider = this.Providers.c
             foreach (var product in products)
             {
-                string productCodeTarget = product.ProductCode;
-                // Card Create Product Code
-                if (String.Equals(productCode,productCodeTarget, StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrWhiteSpace(product.ProductCode) && !string.IsNullOrWhiteSpace(product.Value) && !string.IsNullOrWhiteSpace(product.ProductName))
                 {
-                    //processedProducts.Add(GetApprovalStatus(product, mediaServiceProvider));
-                    ///TODO:
-                }
-                // Identity Check Product Code
-                else if (String.Equals(identityCode, productCodeTarget,StringComparison.OrdinalIgnoreCase))
-                {
-                    processedProducts.Add(CheckIdentity(applicationKey, product));
-                }
-                else
-                {
-                    processedProducts.Add(ProcessApprovalStatusForSingleProduct(product));
+                    string productCodeTarget = product.ProductCode;
+                    // Card Create Product Code
+                    if (!string.IsNullOrWhiteSpace(productCodeTarget) && String.Equals(productCode, productCodeTarget, StringComparison.OrdinalIgnoreCase))
+                    {
+                        //processedProducts.Add(GetApprovalStatus(product, mediaServiceProvider));
+                        ///TODO:
+                    }
+                    // Identity Check Product Code
+                    else  if (String.Equals(identityCode, productCodeTarget, StringComparison.OrdinalIgnoreCase))
+                    {
+                        processedProducts.Add(CheckIdentity(applicationKey, product));
+                    }
+                    else
+                    {
+                        processedProducts.Add(ProcessApprovalStatusForSingleProduct(product));
+                    }
                 }
             }
         }
@@ -235,7 +210,7 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
         private ProductApprovalFulfillmentRecord CheckIdentity(Guid applicationKey, UpdateProductFulfillmentRecord product)
         {
             Log.Info("Processing approval for line item {0} with value ", product.LineItemIdentifier, product.Value);
-            var identityCheckProvider = Providers.CreateIdentityCheckProvider();
+            var identityCheckProvider = Providers.IdentityCheckProvider;
             IdentityCheckStatus status = identityCheckProvider.GetStatus(applicationKey, product.Value);
             // the status never null
             return ProcessApprovalStatusForSingleProduct(product, status, null, null);

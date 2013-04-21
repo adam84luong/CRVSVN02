@@ -37,7 +37,7 @@ namespace Payjr.Core.Test.Providers
                                          Status = IdentityCheckStatus.Approved
                                      });
             ProviderFactory.SetupIdentityCheck(response);
-            var target = new IdentityCheckProvider(ProviderFactory,ProviderFactory.CreateIdentityCheck());
+            var target = new IdentityCheckProvider(ProviderFactory,ProviderFactory.IdentityCheck);
             var result = target.GetStatus(new Guid(), identityCheckUserIdentifier);
             Assert.AreEqual(result,IdentityCheckStatus.Approved);
         }
@@ -53,7 +53,7 @@ namespace Payjr.Core.Test.Providers
                 Status = IdentityCheckStatus.Denied
             });
             ProviderFactory.SetupIdentityCheck(response);
-            var target = new IdentityCheckProvider(ProviderFactory, ProviderFactory.CreateIdentityCheck());
+            var target = new IdentityCheckProvider(ProviderFactory, ProviderFactory.IdentityCheck);
             var result = target.GetStatus(new Guid(), identityCheckUserIdentifier);
             Assert.AreEqual(result, IdentityCheckStatus.Denied);
         }
@@ -69,7 +69,7 @@ namespace Payjr.Core.Test.Providers
                 Status = IdentityCheckStatus.Unknown
             });
             ProviderFactory.SetupIdentityCheck(response);
-            var target = new IdentityCheckProvider(ProviderFactory,ProviderFactory.CreateIdentityCheck());
+            var target = new IdentityCheckProvider(ProviderFactory,ProviderFactory.IdentityCheck);
            
             var result = target.GetStatus(new Guid(), identityCheckUserIdentifier);
             Assert.AreEqual(result, IdentityCheckStatus.Unknown);
