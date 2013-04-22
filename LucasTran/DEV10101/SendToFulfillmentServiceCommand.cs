@@ -3,7 +3,7 @@ using Common.Contracts.ProductFulfillment.Records;
 using Common.Contracts.ProductFulfillment.Requests;
 using Common.Contracts.ProductFulfillment.Responses;
 using Payjr.Core.FinancialAccounts;
-using Payjr.Core.Identifiers;
+using IDENTIFIERS = Payjr.Core.Identifiers;
 using Payjr.Core.Providers;
 using Payjr.Core.Users;
 using SERVICES = Payjr.Core.Services.UserService;
@@ -16,6 +16,8 @@ using Common.Business.Validation;
 using Payjr.Types;
 using Payjr.Core.Services;
 using Payjr.Core.Jobs;
+using Payjr.Core.UserInfo;
+using Payjr.Entity;
 
 
 namespace Payjr.Core.ServiceCommands.ProductFulfillment
@@ -32,14 +34,30 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
             Guid user;
             PrepaidCardAccount prepaidAccount;
             CreateCardJob createCardJob;
+            CustomCardDesign cardDesign;
+
             foreach (SendToFulfillmentRecord record in _fulfillmentRecords)
             {
-                user = new UserIdentifier(record.UserIdentifier).ID;
+                user = new IDENTIFIERS.UserIdentifier(record.UserIdentifier).ID;
                 teen = User.RetrieveUser(user) as Teen;
                 bool success1 = teen.Save(null);
+
+                cardDesign = teen.NewCustomCardDesign();
+                cardDesign.Creator = RoleType.RegisteredTeen;
+                cardDesign.SetDesign("ServerNew");
+                bool success2 = cardDesign.Save(null);
+
                 prepaidAccount = teen.NewPrepaidCardAccount();
-                // createCardJob = (CreateCardJob)Job.RetrieveJob(prepaidAccount.CardCreateJob.JobID); //??????
-                //bool success2 = prepaidAccount.Save(null);//????????????
+                prepaidAccount.FulfillmentDateSent = DateTime.Now;
+                prepaidAccount.IssueDate = DateTime.Now;
+                prepaidAccount.IsActive = true;
+                prepaidAccount.CustomCardDesignID = cardDesign.CustomCardDesignID;
+                bool success3 = prepaidAccount.Save(null);
+
+                createCardJob = (CreateCardJob)Job.RetrieveJob(prepaidAccount.CardCreateJob.JobID); 
+                createCardJob.SaveJob(DateTime.Now);
+
+
                 response.ResponseRecords.Add(record);
             }
             
