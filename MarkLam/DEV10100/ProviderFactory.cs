@@ -48,9 +48,10 @@ namespace Payjr.Core.Providers
             return site.PrepaidProvider;
         }
 
-        public IIdentityCheckProvider CreateIdentityCheckProvider()
+        public IIdentityCheckProvider IdentityCheckProvider
         {
-            return new IdentityCheckProvider(this);
+            get { return new IdentityCheckProvider(this); }
+          
         }
     }
 }
