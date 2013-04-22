@@ -3,9 +3,10 @@ using Common.Contracts.CreditCard.Requests;
 using Common.Contracts.CreditCard.Responses;
 using Common.Contracts.Diagnostics.Requests;
 using Common.Contracts.Diagnostics.Responses;
-using Payjr.Core.Providers;
+using Common.Contracts.Shared.Records;
 using Payjr.Core.ServiceCommands.CreditCardProcessing;
 using Payjr.Core.ServiceCommands.Diagnostics;
+using Payjr.Core.Providers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,11 +51,11 @@ namespace Payjr.Services
         {
             throw new NotImplementedException();
         }
-        
         public RetrieveCardResponse RetrieveCardsforUser(Guid applicationKey, RetrieveCardRequest request)
         {
-            throw new NotImplementedException();
+            return new RetrieveCardsforUserServiceCommand(_providers).Execute(request);
         }
+      
         
         public DeviceFingerprintInfoResponse RetrieveDeviceFingerprintInfo(Guid applicationKey)
         {
