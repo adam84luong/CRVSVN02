@@ -24,10 +24,9 @@ namespace Payjr.Core.ServiceCommands.CreditCardProcessing
         {
             foreach (var retrieveCardRecord in _retrieveCardRecords)
             {
-                FinancialAccountList<CreditCardAccount> creditCardAccounts;
-                if (GetCreditCardAccount(retrieveCardRecord.UserIdentifier, out creditCardAccounts))
-                {
-                    foreach (CreditCardAccount creditCardAccount in creditCardAccounts)
+                Parent parent ;       
+                FinancialAccountList<CreditCardAccount> creditCardAccounts = GetCreditCardAccounts(retrieveCardRecord.UserIdentifier, out parent);
+                foreach (CreditCardAccount creditCardAccount in creditCardAccounts)
                     {
                         response.CreditCards.Add
                         (
@@ -38,13 +37,12 @@ namespace Payjr.Core.ServiceCommands.CreditCardProcessing
                             CardType = creditCardAccount.Type,
                             ExpirationMonth = creditCardAccount.ExpirationDate.ToString("MM"),
                             ExpirationYear = creditCardAccount.ExpirationDate.ToString("yyyy"),
-                            User = new UserDetailRecord(),
+                            User = ServiceCommandHelper.ConvertUserToUserDetailRecord((User)parent),
                             UserIdentifier = new UserIdentifier(creditCardAccount.UserID.Value).Identifier
                         }
                         );
-                    }      
-                       
-                }
+                    }            
+              
             }
                                   
                 return true;
@@ -83,39 +81,29 @@ namespace Payjr.Core.ServiceCommands.CreditCardProcessing
 
         #region helper methods
 
-        private bool GetCreditCardAccount(string userIdentifier, out FinancialAccountList<CreditCardAccount> creditCardAccounts)
-        {
-            creditCardAccounts = null;       
-
+        private FinancialAccountList<CreditCardAccount> GetCreditCardAccounts(string userIdentifier, out Parent parent)
+        {           
+            parent=null;
+            FinancialAccountList<CreditCardAccount> result = new  FinancialAccountList<CreditCardAccount>(new List<CreditCardAccount>());
             try
             {
                 var userID = new UserIdentifier(userIdentifier).ID;
-                User anUser = User.RetrieveUser(userID);
-                if (anUser == null)
+                parent = User.RetrieveUser(userID) as Parent;
+                if (parent != null)
                 {
-                    Log.Debug("Could not found an user with user ID={0}", userID);
-                    return false;           
-                }
-
-                if (anUser.RoleType != Entity.RoleType.Parent)
-                {
-                    Log.Debug("User ID = {0} has invalid role to retrieve credit card", userID);
-                }
-
-                Parent cardOwner = anUser as Parent;
-                creditCardAccounts = cardOwner.FinancialAccounts.CreditCardAccounts;
-                if (creditCardAccounts == null)
-                {
-                    Log.Debug("Could not found a CreditCard with UserIdentifier = {0}", userIdentifier);
-                    return false;
+                    var creditCardAccounts = parent.FinancialAccounts.CreditCardAccounts;
+                    if (creditCardAccounts != null && creditCardAccounts.Count != 0)
+                    {
+                        result = creditCardAccounts;
+                    }
                 }            
             }
             catch (Exception ex)
             {
                 Log.Debug(ex.Message);
-                return false;
+     
             }
-            return true;
+            return result;
         }
 
     

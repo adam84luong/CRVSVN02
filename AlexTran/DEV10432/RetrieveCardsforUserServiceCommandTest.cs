@@ -48,7 +48,7 @@ namespace Payjr.Core.Test.ServiceCommands.CreditCardProcessing
             Assert.IsNotNull(ccAcct);
             var ccAcctRecord = result.CreditCards[0];
             Assert.AreEqual("PJRCCA:" + ccAcct.AccountID, ccAcctRecord.AccountIdentifier);
-            Assert.AreEqual("0613", ccAcctRecord.CardNumberLastFour);
+            Assert.AreEqual("0614", ccAcctRecord.CardNumberLastFour);
             Assert.AreEqual(CreditCardType.VISA, ccAcctRecord.CardType);
             Assert.AreEqual(DateTime.Now.ToString("MM"), ccAcctRecord.ExpirationMonth);
             Assert.AreEqual(DateTime.Now.ToString("yyyy"), ccAcctRecord.ExpirationYear);
