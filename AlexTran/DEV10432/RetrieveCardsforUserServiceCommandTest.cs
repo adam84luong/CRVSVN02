@@ -25,7 +25,9 @@ namespace Payjr.Core.Test.ServiceCommands.CreditCardProcessing
         {
             base.MyTestInitialize();
             TestEntityFactory.CreatePrepaidModule(_branding.BrandingId);
-            TestEntityFactory.CreateCreditCardAccount(_parent, true, AccountStatus.AllowMoneyMovement);
+            TestEntityFactory.CreateCreditCardAccount(_parent, true, AccountStatus.AllowMoneyMovement, "4012001021000613");
+            TestEntityFactory.CreateCreditCardAccount(_parent, true, AccountStatus.AllowMoneyMovement, "4012001021000614");
+            TestEntityFactory.CreateCreditCardAccount(_parent, true, AccountStatus.AllowMoneyMovement, "4012001021000615");
             _request = CreateRetrieveCardRequest(true);    
 
         }
@@ -41,7 +43,7 @@ namespace Payjr.Core.Test.ServiceCommands.CreditCardProcessing
             var result = target.Execute(_request);
             Assert.IsNotNull(result.Status);
             Assert.IsTrue(result.Status.IsSuccessful);
-            Assert.AreEqual(1, result.CreditCards.Count);
+            Assert.AreEqual(3, result.CreditCards.Count);
             var ccAcct = _parent.FinancialAccounts.CreditCardAccounts[0];
             Assert.IsNotNull(ccAcct);
             var ccAcctRecord = result.CreditCards[0];
@@ -81,51 +83,7 @@ namespace Payjr.Core.Test.ServiceCommands.CreditCardProcessing
                 result.Status.ErrorMessage);
         }
        
-        [TestMethod]
-        public void Execute_Failure_UserIdentifierIsNull()
-        {
-            _request.RetrieveCardRecords[0].UserIdentifier= string.Empty;
-            var target = new RetrieveCardsforUserServiceCommand(ProviderFactory);
-            var result = target.Execute(_request);
-            Assert.IsNotNull(result.Status);
-            Assert.IsFalse(result.Status.IsSuccessful);
-            Assert.AreEqual(
-                string.Format("UserIdentifier must be set{0}Parameter name: request.RetrieveCardRecords[0].UserIdentifier", Environment.NewLine),
-                result.Status.ErrorMessage);
-        }
-
-        [TestMethod]
-        public void Execute_Failure_CouldNotFoundCardOwner()
-        {
-
-            _request.RetrieveCardRecords[0].UserIdentifier = "UserIdentifier";
-            var target = new RetrieveCardsforUserServiceCommand(ProviderFactory);
-            var result = target.Execute(_request);
-            Assert.IsNotNull(result.Status);
-            Assert.IsFalse(result.Status.IsSuccessful);
-            Assert.AreEqual(
-                string.Format(
-                    "Could not found an user with user ID = {0}",
-                    Guid.Empty),
-                result.Status.ErrorMessage);
-        }
-
-        [TestMethod]
-        public void Execute_Failure_CardOwnerIsNotParent()
-        {
-
-            _request.RetrieveCardRecords[0].UserIdentifier = new UserIdentifier(_teen.UserID).Identifier;
-            var target = new RetrieveCardsforUserServiceCommand(ProviderFactory);
-            var result = target.Execute(_request);
-            Assert.IsNotNull(result.Status);
-            Assert.IsFalse(result.Status.IsSuccessful);
-            Assert.AreEqual(
-                string.Format(
-                    "User ID = {0} has invalid role to retrieve credit card",
-                    _teen.UserID),
-                result.Status.ErrorMessage);
-        }
-
+    
         #endregion
                 
         #region helper methods
