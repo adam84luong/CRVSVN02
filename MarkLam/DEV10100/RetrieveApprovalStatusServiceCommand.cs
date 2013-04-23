@@ -5,10 +5,12 @@ using Common.Contracts.ProductFulfillment.Responses;
 using Common.Contracts.Shared.Records;
 using Common.Exceptions;
 using Common.Types;
+using Payjr.Core.Adapters;
 using Payjr.Core.Configuration;
 using Payjr.Core.Providers;
 using Payjr.Core.Providers.Interfaces;
 using Payjr.Core.Services;
+using Payjr.Entity.EntityClasses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,7 +42,7 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
                 List<ProductApprovalFulfillmentRecord> listProductApproval = new List<ProductApprovalFulfillmentRecord>(); 
                 foreach (var lineItem in reqRecord.LineItems)
                 {
-                    if ( lineItem.Configuration.ApplicationKey != null && lineItem.Configuration.ApplicationKey != Guid.Empty)
+                  
                         ProcessRetrieveApprovalStatus(lineItem.Configuration.ApplicationKey, lineItem.ProductRecords, out listProductApproval);
                     if (listProductApproval.Count > 0)
                     {
@@ -138,28 +140,42 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
 
         #region Process
 
-        public void ProcessRetrieveApprovalStatus(Guid applicationKey, List<UpdateProductFulfillmentRecord> products, out List<ProductApprovalFulfillmentRecord> processedProducts)
+        private void ProcessRetrieveApprovalStatus(Guid applicationKey, List<UpdateProductFulfillmentRecord> products, out List<ProductApprovalFulfillmentRecord> processedProducts)
         {
             processedProducts = new List<ProductApprovalFulfillmentRecord>();
             
             string identityCode = String.IsNullOrEmpty(SystemConfiguration.IdentityCheckProductCode)? null: SystemConfiguration.IdentityCheckProductCode;
             string productCode = String.IsNullOrEmpty(SystemConfiguration.CardProductCode) ? null : SystemConfiguration.CardProductCode; 
             //IMediaServiceProvider mediaServiceProvider = this.Providers.c
+            
             foreach (var product in products)
             {
                 if (!string.IsNullOrWhiteSpace(product.ProductCode) && !string.IsNullOrWhiteSpace(product.Value) && !string.IsNullOrWhiteSpace(product.ProductName))
                 {
                     string productCodeTarget = product.ProductCode;
                     // Card Create Product Code
-                    if (!string.IsNullOrWhiteSpace(productCodeTarget) && String.Equals(productCode, productCodeTarget, StringComparison.OrdinalIgnoreCase))
+                    if (String.Equals(productCode, productCodeTarget, StringComparison.OrdinalIgnoreCase))
                     {
-                        //processedProducts.Add(GetApprovalStatus(product, mediaServiceProvider));
-                        ///TODO:
+                        CustomCardDesignUserEntity cardDesign = Providers.CardDesignsDataAdapterObj.RetrieveUserCardDesignFromServerSideID(product.Value);
+                        ProductApprovalFulfillmentRecord record = ProcessApprovalStatusForSingleProduct(product);
+                        if (cardDesign != null)
+                        {
+                            if (cardDesign.CustomCardDesign.IsApproved == false)
+                                record.IsApproved = false;
+                            else record.IsApproved = true;
+                        }
+                        else
+                        {
+                            Log.Error("The value '{0}' of product code couldn't found in stored data. Please run command line to retrieve approval from SSG", product.Value);
+                            record.IsApproved = null;
+                        }
+                        processedProducts.Add(record);
                     }
                     // Identity Check Product Code
                     else  if (String.Equals(identityCode, productCodeTarget, StringComparison.OrdinalIgnoreCase))
                     {
-                        processedProducts.Add(CheckIdentity(applicationKey, product));
+                        if (applicationKey != null & applicationKey != Guid.Empty)
+                            processedProducts.Add(CheckIdentity(applicationKey, product));
                     }
                     else
                     {

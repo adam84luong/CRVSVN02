@@ -15,6 +15,8 @@ using Common.Contracts.IdentityCheck;
 using Common.Contracts.IdentityCheck.Responses;
 using Common.Contracts.Shared.Records;
 using Common.Contracts.IdentityCheck.Requests;
+using Payjr.DataAdapters.Users;
+using Payjr.Entity.EntityClasses;
 
 namespace Payjr.Core.Test.Providers
 {
@@ -29,7 +31,7 @@ namespace Payjr.Core.Test.Providers
 
         public IIdentityCheck IdentityCheck { get; set; } //used to test identity check provider
         public IIdentityCheckProvider IdentityCheckProvider { get; set; }
-       
+        public ICardDesignsDataAdapter CardDesignsDataAdapterObj{ get; set; }
         public int CacheDuration
         {
             get { return 0; }
@@ -107,6 +109,14 @@ namespace Payjr.Core.Test.Providers
                 providerMock.RequestStatus(It.IsAny<RetrievalConfigurationRecord>(), It.IsAny<RequestStatusRequest>())).IgnoreArguments().Return(expectedResponse).Repeat.Any();
             RhinoMocks.Replay(providerMock);
             IdentityCheck = providerMock;
+        }
+        public void SetupCardDesignsDataAdapter(CustomCardDesignUserEntity expectedResponse)
+        {
+            ICardDesignsDataAdapter ccProviderMock = RhinoMocks.StrictMock<ICardDesignsDataAdapter>();
+            RMock.Expect.Call(
+                ccProviderMock.RetrieveUserCardDesignFromServerSideID(It.IsAny<string>())).IgnoreArguments().Return(expectedResponse).Repeat.Any();
+            RhinoMocks.Replay(ccProviderMock);
+            this.CardDesignsDataAdapterObj = ccProviderMock;
         }
         
     }

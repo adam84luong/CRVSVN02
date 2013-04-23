@@ -44,18 +44,22 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
         {
             RetrieveApprovalStatusRequest _request = CreateRetrieveApprovalStatusRequest(true);
             IdentityCheckStatus expectedRespone = IdentityCheckStatus.Approved;
+            CustomCardDesignUserEntity expectedCustomerCard = CreateCustomCardDesignUserEntity(true);
             var target = new RetrieveApprovalStatusServiceCommand(ProviderFactory);
+            
             ProviderFactory.SetupIdentityCheckProvider(expectedRespone);
-
+            ProviderFactory.SetupCardDesignsDataAdapter(expectedCustomerCard);
             var result = target.Execute(_request);
             Assert.IsNotNull(result.Status);
             Assert.IsTrue(result.Status.IsSuccessful);
             Assert.AreEqual(1, result.ResponseRecords.Count);
+            int countIndentityCheckReturn = 0;
             foreach (ProductApprovalFulfillmentRecord item in result.ResponseRecords[0].ProductRecords)
             {
                 if (item.ProductCode == SystemConfiguration.IdentityCheckProductCode)
-                    Assert.IsTrue(item.IsApproved.Value);
+                    countIndentityCheckReturn++;
             }
+            Assert.AreEqual(1, countIndentityCheckReturn);
         }
 
 
@@ -65,8 +69,10 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
             RetrieveApprovalStatusRequest _request = CreateRetrieveApprovalStatusRequest(true);
             var target = new RetrieveApprovalStatusServiceCommand(ProviderFactory);
             IdentityCheckStatus expectedRespone = IdentityCheckStatus.Denied;
-            ProviderFactory.SetupIdentityCheckProvider(expectedRespone);
+            CustomCardDesignUserEntity expectedCustomerCard = CreateCustomCardDesignUserEntity(true);
 
+            ProviderFactory.SetupIdentityCheckProvider(expectedRespone);
+            ProviderFactory.SetupCardDesignsDataAdapter(expectedCustomerCard);
             var result = target.Execute(_request);
             Assert.IsNotNull(result.Status);
             Assert.IsTrue(result.Status.IsSuccessful);
@@ -85,8 +91,9 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
             RetrieveApprovalStatusRequest _request = CreateRetrieveApprovalStatusRequest(true);
             var target = new RetrieveApprovalStatusServiceCommand(ProviderFactory);
             IdentityCheckStatus expectedRespone = IdentityCheckStatus.Unknown;
+            CustomCardDesignUserEntity expectedCustomerCard = CreateCustomCardDesignUserEntity(true);
             ProviderFactory.SetupIdentityCheckProvider(expectedRespone);
-
+            ProviderFactory.SetupCardDesignsDataAdapter(expectedCustomerCard);
             var result = target.Execute(_request);
             Assert.IsNotNull(result.Status);
             Assert.IsTrue(result.Status.IsSuccessful);
@@ -128,7 +135,9 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
             request.RequestRecords[0].LineItems[0].ProductRecords[2].ProductCode = string.Empty;
             var target = new RetrieveApprovalStatusServiceCommand(ProviderFactory);
             IdentityCheckStatus expectedRespone = IdentityCheckStatus.Approved;
+            CustomCardDesignUserEntity expectedCustomerCard = CreateCustomCardDesignUserEntity(true);
             ProviderFactory.SetupIdentityCheckProvider(expectedRespone);
+            ProviderFactory.SetupCardDesignsDataAdapter(expectedCustomerCard);
             var result = target.Execute(request);
             Assert.IsNotNull(result.Status);
             Assert.IsTrue(result.Status.IsSuccessful);
@@ -141,10 +150,13 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
             RetrieveApprovalStatusRequest request = CreateRetrieveApprovalStatusRequest(true);
             request.RequestRecords[0].LineItems[0].Configuration.ApplicationKey = Guid.Empty;
             var target = new RetrieveApprovalStatusServiceCommand(ProviderFactory);
+            CustomCardDesignUserEntity expectedCustomerCard = CreateCustomCardDesignUserEntity(true);
+            ProviderFactory.SetupCardDesignsDataAdapter(expectedCustomerCard);
+
             var result = target.Execute(request);
             Assert.IsNotNull(result.Status);
             Assert.IsTrue(result.Status.IsSuccessful);
-            Assert.AreEqual(0, result.ResponseRecords.Count);
+            Assert.AreEqual(1, result.ResponseRecords.Count); //only 1 for product code
         }
 
         [TestMethod]
@@ -158,9 +170,10 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
             _request.RequestRecords.Add(approvalRecord);
             //----------------------
             IdentityCheckStatus expectedRespone = IdentityCheckStatus.Approved;
+            CustomCardDesignUserEntity expectedCustomerCard = CreateCustomCardDesignUserEntity(true);
             var target = new RetrieveApprovalStatusServiceCommand(ProviderFactory);
             ProviderFactory.SetupIdentityCheckProvider(expectedRespone);
-
+            ProviderFactory.SetupCardDesignsDataAdapter(expectedCustomerCard);
             var result = target.Execute(_request);
             Assert.IsNotNull(result.Status);
             Assert.IsTrue(result.Status.IsSuccessful);
@@ -182,16 +195,65 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
             _request.RequestRecords[1].LineItems[0].Configuration.ApplicationKey = Guid.Empty;
             //----------------------
             IdentityCheckStatus expectedRespone = IdentityCheckStatus.Approved;
+            CustomCardDesignUserEntity expectedCustomerCard = CreateCustomCardDesignUserEntity(true);
             var target = new RetrieveApprovalStatusServiceCommand(ProviderFactory);
             ProviderFactory.SetupIdentityCheckProvider(expectedRespone);
+            ProviderFactory.SetupCardDesignsDataAdapter(expectedCustomerCard);
+            var result = target.Execute(_request);
+            Assert.IsNotNull(result.Status);
+            Assert.IsTrue(result.Status.IsSuccessful);
+            Assert.AreEqual(2, result.ResponseRecords.Count);
+            int count = CountIdentityCheckSuccess(result);
+            Assert.AreEqual(1, count);
+        }
+        [TestMethod]
+        public void Execute_ProductCode_Sucessful_Approved()
+        {
+            RetrieveApprovalStatusRequest _request = CreateRetrieveApprovalStatusRequest(true);
+            IdentityCheckStatus expectedRespone = IdentityCheckStatus.Approved;
+            CustomCardDesignUserEntity expectedCustomerCard = CreateCustomCardDesignUserEntity(true);
+            var target = new RetrieveApprovalStatusServiceCommand(ProviderFactory);
+            ProviderFactory.SetupIdentityCheckProvider(expectedRespone);
+            ProviderFactory.SetupCardDesignsDataAdapter(expectedCustomerCard);
+            
+            var result = target.Execute(_request);
+            Assert.IsNotNull(result.Status);
+            Assert.IsTrue(result.Status.IsSuccessful);
+            Assert.AreEqual(1, result.ResponseRecords.Count);
+            int countProductCodeReturn = 0;
+            foreach (ProductApprovalFulfillmentRecord item in result.ResponseRecords[0].ProductRecords)
+            {
+                if (item.ProductCode == SystemConfiguration.CardProductCode && item.IsApproved == true)
+                    countProductCodeReturn++;
+                
+            }
+            Assert.AreEqual(1,countProductCodeReturn);
+        }
+        [TestMethod]
+        public void Execute_ProductCode_Sucessful_Unknown()
+        {
+            RetrieveApprovalStatusRequest _request = CreateRetrieveApprovalStatusRequest(true);
+            IdentityCheckStatus expectedRespone = IdentityCheckStatus.Approved;
+            CustomCardDesignUserEntity expectedCustomerCard = CreateCustomCardDesignUserEntity(null);
+            var target = new RetrieveApprovalStatusServiceCommand(ProviderFactory);
+            ProviderFactory.SetupIdentityCheckProvider(expectedRespone);
+            ProviderFactory.SetupCardDesignsDataAdapter(expectedCustomerCard);
 
             var result = target.Execute(_request);
             Assert.IsNotNull(result.Status);
             Assert.IsTrue(result.Status.IsSuccessful);
             Assert.AreEqual(1, result.ResponseRecords.Count);
-            int count = CountIdentityCheckSuccess(result);
-            Assert.AreEqual(1, count);
+            int countProductCodeReturn = 0;
+            foreach (ProductApprovalFulfillmentRecord item in result.ResponseRecords[0].ProductRecords)
+            {
+                if (item.ProductCode == SystemConfiguration.CardProductCode && item.IsApproved == null)
+                    countProductCodeReturn++;
+
+            }
+            Assert.AreEqual(1, countProductCodeReturn);
         }
+
+
         #region Helper
 
         private static int CountIdentityCheckSuccess(Common.Contracts.ProductFulfillment.Responses.RetrieveApprovalStatusResponse result)
@@ -230,7 +292,19 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
             }
             return result;
         }
-
+        private CustomCardDesignUserEntity CreateCustomCardDesignUserEntity(bool? isApproved)
+        {
+            if (isApproved == null)
+                return null;
+            var result = new CustomCardDesignUserEntity
+            {
+                CustomCardDesign = new CustomCardDesignEntity 
+                { 
+                    IsApproved = isApproved.Value,
+                }
+            };
+            return result;
+        }
         private List<ProductFulfillmentLineItem> GetProductFulfilmentLineItems()
         {
             List<ProductFulfillmentLineItem> result  = new List<ProductFulfillmentLineItem>();
