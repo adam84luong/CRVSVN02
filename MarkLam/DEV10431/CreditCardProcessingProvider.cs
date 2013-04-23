@@ -6,6 +6,7 @@ using Common.Contracts.CreditCard.Requests;
 using Common.Contracts.Shared.Records;
 using Common.Service.Providers;
 using Common.Types;
+using System.Collections.Generic;
 
 namespace CardLab.CMS.Providers
 {
@@ -60,6 +61,33 @@ namespace CardLab.CMS.Providers
             catch (Exception e)
             {
                 Log.ErrorException("Error creation credit card", e);
+            }
+            return null;
+        }
+
+        public List<CreditCardDetailedRecord> RetrieveAccounts(string userIdentifier)
+        {
+            //RetrieveCardResponse RetrieveCardsforUser(Guid applicationKey, RetrieveCardRequest request);
+            RetrieveCardRecord retrieveCardRecord = new RetrieveCardRecord
+            { 
+                UserIdentifier = userIdentifier
+            };
+            //We call method RetrieveCardsforUser to get result.but the some argurment in this method will be ignored without making affect to expected result.
+            RetrieveCardRequest request = new RetrieveCardRequest();
+            request.RetrieveCardRecords.Add(retrieveCardRecord);
+            
+            try
+            {
+                var response = CallService(() => CreateInstance().RetrieveCardsforUser(Guid.Empty,request)); // applicationKey can be ignored.
+
+                if (response.CreditCards.Count > 0)
+                {
+                    return response.CreditCards;
+                }
+            }
+            catch (Exception e)
+            {
+                Log.ErrorException("Error retrieve account", e);
             }
             return null;
         }

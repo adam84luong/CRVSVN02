@@ -10,5 +10,6 @@ namespace CardLab.CMS.Providers
         CreditCardDetailedRecord CreateCreditCard(Guid appicationKey, string userIdentifier, UserDetailRecord userInfo,
                                                   string cardNumber, string cvv2, int expirationMonth,
                                                   int expirationYear, CreditCardType cardType);
+        List<CreditCardDetailedRecord> RetrieveAccounts(string userIdentifier);
     }
 }
