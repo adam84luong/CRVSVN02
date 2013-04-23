@@ -9,7 +9,6 @@ using Payjr.Core.Services;
 using System.Diagnostics;
 using Payjr.Core.BrandingSite;
 using Payjr.Core.Providers.Interfaces;
-using Payjr.DataAdapters.Users;
 
 namespace Payjr.Core.Providers
 {
@@ -53,11 +52,6 @@ namespace Payjr.Core.Providers
         {
             get { return new IdentityCheckProvider(this); }
           
-        }
-        public ICardDesignsDataAdapter CardDesignsDataAdapterObj
-        {
-            get { return new CardDesignsDataAdapter(); }
-
         }
     }
 }

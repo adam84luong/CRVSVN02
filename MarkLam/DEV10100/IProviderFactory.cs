@@ -8,7 +8,6 @@ using Payjr.Core.Metrics;
 using Payjr.Core.Services;
 using Payjr.Core.BrandingSite;
 using Payjr.Core.Providers.Interfaces;
-using Payjr.DataAdapters.Users;
 
 namespace Payjr.Core.Providers
 {
@@ -18,7 +17,5 @@ namespace Payjr.Core.Providers
         ICreditCardProvider CreateCreditCardProvider(Site site);
         ICardProvider CreatePrepaidCardProvider(Site site);
         IIdentityCheckProvider IdentityCheckProvider {get;}
-        ICardDesignsDataAdapter CardDesignsDataAdapterObj { get; }
-
     }
 }
