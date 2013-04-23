@@ -10,6 +10,25 @@ using Payjr.Types;
 
 namespace Payjr.DataAdapters.Users
 {
+    public interface CardDesignsDataAdapter
+    {
+        PictureEntity RetrievePicture(DataAccessAdapter adapter, Guid pictureID);
+        EntityCollection<CustomCardDesignEntity> RetrieveUnApprovedCardDesigns(DataAccessAdapter adapter);
+        EntityCollection<CustomCardDesignEntity> RetrieveApprovedCardDesigns(DataAccessAdapter adapter);
+        EntityCollection<CustomCardDesignEntity> RetrieveLastCreatedCardDesigns(DataAccessAdapter adapter);
+        CustomCardDesignEntity RetrieveCardDesignRegistration(DataAccessAdapter adapter, string cardID);
+        CustomCardDesignUserEntity RetrieveUserCardDesignFromDesignID(Guid cardDesignID);
+        CustomCardDesignUserEntity RetrieveUserCardDesignFromServerSideID(string serverSideID);
+        CustomCardDesignEntity RetrieveUserCardDesign(Guid cardDesignID);
+        UnregisteredCustomCardDesignEntity RetrieveUnregisteredCardDesign(Guid cardDesignID);
+        UnregisteredCustomCardDesignEntity RetrieveUnregisteredCardDesignByServerSideID(string serverSideID);
+        bool DoesDBContainServerSideID(string serverSideID, Guid? customCardID);
+        CustomCardDesignEntity RetrieveCardNeedingDesignbyChild(DataAccessAdapter adapter, Guid userID);
+        CustomCardDesignEntity CreateNewCardDesign(UserEntity user);
+        CustomCardDesignEntity CreateNewUnregisteredCustomCardDesign(UnregisteredCustomCardDesignEntity entity);
+        int UpdateCardDesigns(DataAccessAdapter adapter, EntityCollection<CustomCardDesignEntity> cardDesigns);
+        CustomCardDesignUserEntity AssignCustomCardDesignToUser(UserEntity user, Guid customCardDesignID);
+    }
     /// <summary>
     /// Card Designs
     /// </summary>
