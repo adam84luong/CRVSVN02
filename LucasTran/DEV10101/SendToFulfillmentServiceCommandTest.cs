@@ -9,6 +9,8 @@ using Common.Contracts.OrderProcessing.Records;
 using Payjr.Util.Test;
 using Payjr.Core.Users;
 using Common.Types;
+using Payjr.Core.Configuration;
+using Payjr.Entity.EntityClasses;
 
 namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
 {
@@ -72,6 +74,45 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
 
         #region helper methods
 
+        private List<UpdateProductFulfillmentRecord> CreateUpdateProductFulfillmenetRecords()
+        {
+            List<UpdateProductFulfillmentRecord> result = new List<UpdateProductFulfillmentRecord>();
+            result.Add(new UpdateProductFulfillmentRecord
+            {
+                IsPrimary = true,
+                LineItemIdentifier = "OrderLineItemIdentifier1",
+                Price = 5,
+                ProductCode = "110000",
+                ProductName = "Buxx Card",
+                Quantity = 1,
+                Shipping = null,
+                Value = "3m82vyhx2",
+                ValueData = ""
+            });
+            result.Add(new UpdateProductFulfillmentRecord
+            {
+                IsPrimary = true,
+                LineItemIdentifier = "OrderLineItemIdentifier3",
+                Price = 5,
+                ProductCode = "110019",
+                ProductName = "Identity Check",
+                Quantity = 1,
+                Shipping = null,
+                Value = "88dc99db-b67e-4c77-91c8-68a3a756b9a6",
+                ValueData = ""
+            });
+            return result;
+        }
+
+        private List<ProductFulfillmentLineItem> CreateProductLineItems()
+        {
+            List<ProductFulfillmentLineItem> productlineitems = new List<ProductFulfillmentLineItem>();
+            ProductFulfillmentLineItem lineitem = new ProductFulfillmentLineItem();
+            lineitem.ProductRecords.AddRange(CreateUpdateProductFulfillmenetRecords());
+            productlineitems.Add(lineitem);
+            return productlineitems;
+        }
+
         private SendToFulfillmentRequest CreateSendToFulfillmentRequest()
         {
             var result = new SendToFulfillmentRequest
@@ -84,7 +125,7 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
 
             SendToFulfillmentRecord record1 = new SendToFulfillmentRecord();
             record1.CustomerType = "";
-            record1.ProductLineItems.Add(new ProductFulfillmentLineItem());
+            record1.ProductLineItems.AddRange(CreateProductLineItems());
             record1.Ref1 = "";
             record1.ShipmentPackaging = new List<ShipmentPackaging>();
             record1.TransactionRecords = new List<Common.Contracts.ProductFulfillment.Records.TransactionRecord>();
@@ -93,7 +134,7 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
 
             SendToFulfillmentRecord record2 = new SendToFulfillmentRecord();
             record2.CustomerType = "";
-            record2.ProductLineItems.Add(new ProductFulfillmentLineItem());
+            record2.ProductLineItems.AddRange(CreateProductLineItems());
             record2.Ref1 = "";
             record2.ShipmentPackaging = new List<ShipmentPackaging>();
             record2.TransactionRecords = new List<Common.Contracts.ProductFulfillment.Records.TransactionRecord>();
