@@ -187,5 +187,23 @@ namespace CardLab.CMS.Test.Providers
             bool result = target.CardActivation(new Guid(), "cardIdentifier", "actingUserIdentifier", "ipAddrress", "activeData");
             Assert.IsFalse(result);
         }
+
+        [TestMethod]
+        public void CloseCard_Success()
+        {
+            CloseCardRequestRecord requestRecord = new CloseCardRequestRecord()
+            {
+                ActingUserIdentifier = "ActingUserIdentifier",
+                CardIdentifier = "CardIdentifier"
+            };
+         
+            PrepaidMock.Setup(mock =>
+                        mock.CloseCard(It.IsAny<RetrievalConfigurationRecord>(), It.IsAny<CloseCardRequest>())).Verifiable();
+
+            var target = new PrepaidProvider(ProviderFactory, PrepaidMock.Object);
+            target.CloseCard(new Guid(), "CardIdentifier", "ActingUserIdentifier");
+
+            PrepaidMock.Verify();
+        }
     }
 }

@@ -120,5 +120,37 @@ namespace CardLab.CMS.Providers
         {
             throw new NotImplementedException();
         }
+
+        public void CloseCard(Guid applicationKey, string actingUserIdentifier, string cardIdentifier)
+        {
+            var request = new CloseCardRequest();
+            
+            request.Requests.Add(new CloseCardRequestRecord()
+                                     {
+                                         ActingUserIdentifier = actingUserIdentifier,
+                                         CardIdentifier = cardIdentifier
+                                     });
+            var configuration = new RetrievalConfigurationRecord()
+                                    {
+                                        ApplicationKey = applicationKey
+                                    };
+            request.Header = new RequestHeaderRecord()
+                                    {
+                                        CallerName = "CardLab.CMS.Providers.PrepaidProvider.CloseCard"
+                                    };
+            try
+            {
+                CallService(() =>
+                {
+                    CreateInstance().CloseCard(configuration, request);
+                    return new GenericResponse<bool>(true);
+                });
+            }
+            catch (Exception ex)
+            {
+                Log.ErrorException(String.Format("An error occurred while close Card {0} by userIdentifier {1}.", cardIdentifier, actingUserIdentifier), ex);
+                return;
+            }
+        }
     }
 }
