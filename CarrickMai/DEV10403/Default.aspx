@@ -10,7 +10,7 @@
 </head>
 <body>
     <form id="form1" runat="server">
-        <telerik:RadScriptManager ID="RadScriptManager1" runat="server">
+        <telerik:RadScriptManager ID="RadScriptManager1" runat="server" >
             <Scripts>
                 <asp:ScriptReference Assembly="Telerik.Web.UI" Name="Telerik.Web.UI.Common.Core.js">
                 </asp:ScriptReference>
@@ -23,18 +23,15 @@
         <telerik:RadAjaxManager ID="RadAjaxManager1" runat="server">
         </telerik:RadAjaxManager>
     <div>
-        <telerik:RadComboBox ID="RadComboBox1" runat="server"  style="white-space:normal;width:460px;">
-             <Items>
-                <telerik:RadComboBoxItem Text="" Value="EmptyItem" />
-             </Items>          
+        <telerik:RadComboBox ID="RadComboBox1" runat="server" AutoPostBack="true"  style="white-space:normal;width:460px;" OnSelectedIndexChanged="RadComboBox1_SelectedIndexChanged">        
             <FooterTemplate>
               <asp:Label ID="Label1" runat="server" Text="DateRange"></asp:Label>
                 <br />
                 <asp:Label ID="Label2" runat="server" Text="From"></asp:Label>
-                <telerik:RadDatePicker ID="RadDatePicker1" Runat="server">
+                <telerik:RadDatePicker ID="RadDatePicker1" Runat="server" ReadOnly="true" >
                 </telerik:RadDatePicker>
                 <asp:Label ID="Label3" runat="server" Text="To"></asp:Label>
-                <telerik:RadDatePicker ID="RadDatePicker2" Runat="server">
+                <telerik:RadDatePicker ID="RadDatePicker2" Runat="server" ReadOnly="true" >
                 </telerik:RadDatePicker>
                  <telerik:RadButton ID="RadButton2" OnClick="RadButton2_Click" runat="server" Text="GO">
                  </telerik:RadButton>
