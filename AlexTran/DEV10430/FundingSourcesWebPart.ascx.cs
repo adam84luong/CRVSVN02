@@ -1,4 +1,4 @@
-﻿using CardLab.CMS.PayjrSites.Bussiness;
+﻿using CardLab.CMS.PayjrSites.Business;
 using CardLab.CMS.PayjrSites.User;
 using Common.Contracts.CreditCard.Records;
 using System;
@@ -24,10 +24,10 @@ namespace CMSApp.CMSWebParts.CardLab.Buxx.Account
       
         #region Helper Method
               
-        public void BindGrid(ParentUser parent)
+        private void BindGrid(ParentUser parent)
         {
-            var ccBussiness = CreditCardBussiness.Instance(PayjrSystemInfo);
-            _fundingSourcesGrid.DataSource = ccBussiness.GetCreditCardFunding(parent.UserIdentifier);
+            var ccBusiness = CreditCardBusiness.Instance(PayjrSystemInfo);
+            _fundingSourcesGrid.DataSource = ccBusiness.GetCreditCardFunding(parent.UserIdentifier);
             _fundingSourcesGrid.DataBind();       
         }
        

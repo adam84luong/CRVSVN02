@@ -8,7 +8,7 @@
                 </td>
                 <td style="text-align: right">
                     <telerik:RadButton ID="_addNewFunding" runat="server" Text="Add a Funding Source"
-                        CssClass="btn btn_thin" ButtonType="LinkButton">
+                        CssClass="btn btn_highlight" ButtonType="LinkButton">
                     </telerik:RadButton>
                 </td>
             </tr>
