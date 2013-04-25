@@ -82,9 +82,33 @@ namespace CardLab.CMS.Providers
                 ApplicationKey = applicationKey
             };
 
-            var response = CallService(() => CreateInstance().DeleteCard(applicationKey, request));
-            return response.Status.IsSuccessful;
+            DeleteCardResponse response;
+            try
+            {
+                response = CallService(() => CreateInstance().DeleteCard(applicationKey, request));
+            }
+            catch (Exception ex)
+            {
+                Log.ErrorException(String.Format("An error occurred while delete account with accountIdentifier: {0}.", accountIdentifier), ex);
+                return false;
+            }
+
+            if (!response.Status.IsSuccessful)
+            {
+                Log.Error(String.Format("An error occurred while delete account with accountIdentifier: {0} . Error: {1}", accountIdentifier, response.Status.ErrorMessage));
+                return false;
+            }
+
+            if (response.Respones.Count == 0)
+            {
+                Log.Error(String.Format("An error occurred while delete account because response.Respones is null or Empty"));
+                return false;
+            }
+
+            if (response.Status.IsSuccessful && response.Respones[0].IsDeleted)
+                return true;
+            
+            return false;
         }
-        
     }
 }

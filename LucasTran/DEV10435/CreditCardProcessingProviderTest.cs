@@ -64,15 +64,15 @@ namespace CardLab.CMS.Test.Providers
             Assert.IsNull(result);
         }
 
-        [TestMethod()]
-        public void DeleteAccountTest()
+        [TestMethod]
+        public void DeleteAccountSuccessful()
         {
             var response = new DeleteCardResponse();
             
             response.Respones.Add(new DeleteCardResponseRecord()
             {
                 AccountIdentifier = "AccountIdentifier",
-                IsDeleted = false
+                IsDeleted = true
             });
             response.Status = new ResponseStatusRecord()
             {
@@ -84,8 +84,53 @@ namespace CardLab.CMS.Test.Providers
 
             var target = new CreditCardProcessingProvider(ProviderFactory, CreditCardProcessingMock.Object);
             var result = target.DeleteAccount(new Guid(), "AccountIdentifier");
-            Assert.IsNotNull(result);
             Assert.AreEqual(true, result);
+        }
+
+        [TestMethod]
+        public void DeleteAccountFail_IsSuccessful()
+        {
+            var response = new DeleteCardResponse();
+
+            response.Respones.Add(new DeleteCardResponseRecord()
+            {
+                AccountIdentifier = "AccountIdentifier",
+                IsDeleted = true
+            });
+            response.Status = new ResponseStatusRecord()
+            {
+                IsSuccessful = false
+            };
+
+            CreditCardProcessingMock.Setup(mock => mock.DeleteCard(It.IsAny<Guid>(), It.IsAny<DeleteCardRequest>()))
+                                   .Returns(response);
+
+            var target = new CreditCardProcessingProvider(ProviderFactory, CreditCardProcessingMock.Object);
+            var result = target.DeleteAccount(new Guid(), "AccountIdentifier");
+            Assert.AreEqual(false, result);
+        }
+
+        [TestMethod]
+        public void DeleteAccountFail_IsDeleted()
+        {
+            var response = new DeleteCardResponse();
+
+            response.Respones.Add(new DeleteCardResponseRecord()
+            {
+                AccountIdentifier = "AccountIdentifier",
+                IsDeleted = false
+            });
+            response.Status = new ResponseStatusRecord()
+            {
+                IsSuccessful = true
+            };
+
+            CreditCardProcessingMock.Setup(mock => mock.DeleteCard(It.IsAny<Guid>(), It.IsAny<DeleteCardRequest>()))
+                                   .Returns(response);
+
+            var target = new CreditCardProcessingProvider(ProviderFactory, CreditCardProcessingMock.Object);
+            var result = target.DeleteAccount(new Guid(), "AccountIdentifier");
+            Assert.AreEqual(false, result);
         }
 
         #endregion
