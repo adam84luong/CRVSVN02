@@ -15,38 +15,25 @@
         </table>
     </h3>
     <telerik:RadGrid ID="_fundingSourcesGrid" runat="server" GridLines="None" AutoGenerateColumns="False"
-        Skin="">
-        <MasterTableView Width="100%" ClientDataKeyNames="AccountIdentifier" DataKeyNames="AccountIdentifier"
-            CssClass="transactions importrecordgrid" CellPadding="0" CellSpacing="0">
+         EnableEmbeddedBaseStylesheet="False" EnableEmbeddedSkins="False" Skin="GrayBuxx">
+        <MasterTableView ClientDataKeyNames="AccountIdentifier" DataKeyNames="AccountIdentifier"     >
             <Columns>
-                <telerik:GridBoundColumn UniqueName="CardType" HeaderText="Card Type" DataField="CardType">
-                    <HeaderStyle CssClass="rowitem" />
-                    <ItemStyle CssClass="rowitem" />
+                <telerik:GridBoundColumn UniqueName="CardType" HeaderText="Card Type" DataField="CardType">          
                 </telerik:GridBoundColumn>
                 <telerik:GridBoundColumn UniqueName="CardNumber" HeaderText="Card Number"
-                    DataField="CardNumber">
-                    <HeaderStyle CssClass="rowitem" />
-                    <ItemStyle CssClass="rowitem" />
+                    DataField="CardNumber">             
                 </telerik:GridBoundColumn>
-                <telerik:GridBoundColumn UniqueName="Expiration" HeaderText="Expiration" DataField="Expiration">
-                    <HeaderStyle CssClass="rowitem" />
-                    <ItemStyle CssClass="rowitem" />
+                <telerik:GridBoundColumn UniqueName="Expiration" HeaderText="Expiration" DataField="Expiration">            
                 </telerik:GridBoundColumn>
-                <telerik:GridBoundColumn UniqueName="Status" HeaderText="Status" DataField="Status">
-                    <HeaderStyle CssClass="rowitem" />
-                    <ItemStyle CssClass="rowitem" />
+                <telerik:GridBoundColumn UniqueName="Status" HeaderText="Status" DataField="Status">              
                 </telerik:GridBoundColumn>
                 <telerik:GridTemplateColumn HeaderText="Actions">
                     <ItemTemplate>
                         <asp:LinkButton ID="_editButton" runat="server" CommandName="Edit" ToolTip="Edit"
                             CssClass="editbuton">Edit </asp:LinkButton>
-                    </ItemTemplate>
-                    <HeaderStyle CssClass="last rowitem action" />
-                    <ItemStyle CssClass="last rowitem action" Width="45" VerticalAlign="Middle" />
+                    </ItemTemplate>              
                 </telerik:GridTemplateColumn>
             </Columns>
-        </MasterTableView>
-        <ItemStyle CssClass="oddrow" />
-        <AlternatingItemStyle CssClass="eventrow" />
+        </MasterTableView>   
     </telerik:RadGrid>
 </div>

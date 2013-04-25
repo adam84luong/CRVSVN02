@@ -12,7 +12,7 @@ namespace CardLab.CMS.PayjrSites.Bussiness
     public class CreditCardBussiness
     {
         protected IPayjrSystemInfoProvider PayjrSystem;
-        protected static IProviderFactory Provider;
+        protected IProviderFactory Provider;
 
         #region Constructor
 
@@ -54,19 +54,19 @@ namespace CardLab.CMS.PayjrSites.Bussiness
             return cc;
         }
 
-        public static List<FundingCreditCard> GetFundingCreditCard(string UserIdentifier)
+        public List<CreditCardFunding> GetCreditCardFunding(string UserIdentifier)
         {
-            List<CreditCardDetailedRecord> creditCardAccounts= Provider.CreditCardProcessing.RetrieveAccounts(UserIdentifier);
-            List<FundingCreditCard> fundingSourcesItems = new List<FundingCreditCard>();
+            List<CreditCardDetailedRecord> creditCardAccounts= Provider.CreditCardProcessing.RetrieveAccounts(UserIdentifier);       
+            List<CreditCardFunding> fundingSourcesItems = new List<CreditCardFunding>();
             foreach (CreditCardDetailedRecord creditCardAccount in creditCardAccounts)
             {
-                fundingSourcesItems.Add(ConvertCreditCardtoFundingCreditCard(creditCardAccount));
+                fundingSourcesItems.Add(ConvertCreditCardtoCreditCardFunding(creditCardAccount));
             }
             return fundingSourcesItems;
         }
-        public static FundingCreditCard ConvertCreditCardtoFundingCreditCard(CreditCardDetailedRecord creditCardAccount)
+        public CreditCardFunding ConvertCreditCardtoCreditCardFunding(CreditCardDetailedRecord creditCardAccount)
         {
-            FundingCreditCard fundingSourcesItem = new FundingCreditCard();
+            CreditCardFunding fundingSourcesItem = new CreditCardFunding();
             fundingSourcesItem.AccountIdentifier = creditCardAccount.AccountIdentifier;
             fundingSourcesItem.CardType = creditCardAccount.CardType.ToString();
             fundingSourcesItem.CardNumber = "XXXX-XXXX-XXXX-" + creditCardAccount.CardNumberLastFour;
@@ -76,7 +76,7 @@ namespace CardLab.CMS.PayjrSites.Bussiness
             return fundingSourcesItem;
         }
 
-        public static string GetExpiration(string month, string year, out string status)
+        private string GetExpiration(string month, string year, out string status)
         {
             string expireDay = month + "/" + year.Substring(2, 2);
             string expirestatus = "";

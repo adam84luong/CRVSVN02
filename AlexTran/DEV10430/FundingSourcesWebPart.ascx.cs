@@ -18,19 +18,17 @@ namespace CMSApp.CMSWebParts.CardLab.Buxx.Account
             {
                 var parent = CurrentUser as ParentUser;
 
-                BindGrid(parent, true);
+                BindGrid(parent);
             }
         }
       
         #region Helper Method
               
-        public void BindGrid(ParentUser parent, bool isDataBind = true)
-        {  
-           _fundingSourcesGrid.DataSource =CreditCardBussiness.GetFundingCreditCard(parent.UserIdentifier);
-            if (isDataBind)
-            {
-                _fundingSourcesGrid.DataBind();
-            }
+        public void BindGrid(ParentUser parent)
+        {
+            var ccBussiness = CreditCardBussiness.Instance(PayjrSystemInfo);
+            _fundingSourcesGrid.DataSource = ccBussiness.GetCreditCardFunding(parent.UserIdentifier);
+            _fundingSourcesGrid.DataBind();       
         }
        
         #endregion
