@@ -6,6 +6,7 @@ using Common.Contracts.CreditCard.Requests;
 using Common.Contracts.Shared.Records;
 using Common.Service.Providers;
 using Common.Types;
+using Common.Contracts.CreditCard.Responses;
 
 namespace CardLab.CMS.Providers
 {
@@ -63,5 +64,27 @@ namespace CardLab.CMS.Providers
             }
             return null;
         }
+
+        public bool DeleteAccount(Guid applicationKey, string accountIdentifier)
+        {
+            var request = new DeleteCardRequest();
+            
+            request.Requests.Add(new DeleteCardRecord()
+            {
+                AccountIdentifier = accountIdentifier
+            });
+            request.Header = new RequestHeaderRecord()
+            {
+                CallerName = "CardLab.CMS.Providers.CreditCardProcessingProvider.DeleteAccount"
+            };
+            request.Configuration = new ConfigurationRecord()
+            {
+                ApplicationKey = applicationKey
+            };
+
+            var response = CallService(() => CreateInstance().DeleteCard(applicationKey, request));
+            return response.Status.IsSuccessful;
+        }
+        
     }
 }

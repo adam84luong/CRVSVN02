@@ -6,6 +6,7 @@ using Common.Contracts.CreditCard.Responses;
 using Common.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Common.Contracts.Shared.Records;
 
 namespace CardLab.CMS.Test.Providers
 {
@@ -61,6 +62,30 @@ namespace CardLab.CMS.Test.Providers
             var result = target.CreateCreditCard(new Guid(), "UserIdentifier", new UserDetailRecord(),
                                                  "4000000000000002", "1234", 12, 2016, CreditCardType.VISA);
             Assert.IsNull(result);
+        }
+
+        [TestMethod()]
+        public void DeleteAccountTest()
+        {
+            var response = new DeleteCardResponse();
+            
+            response.Respones.Add(new DeleteCardResponseRecord()
+            {
+                AccountIdentifier = "AccountIdentifier",
+                IsDeleted = false
+            });
+            response.Status = new ResponseStatusRecord()
+            {
+                IsSuccessful = true
+            };
+            
+            CreditCardProcessingMock.Setup(mock => mock.DeleteCard(It.IsAny<Guid>(), It.IsAny<DeleteCardRequest>()))
+                                   .Returns(response);
+
+            var target = new CreditCardProcessingProvider(ProviderFactory, CreditCardProcessingMock.Object);
+            var result = target.DeleteAccount(new Guid(), "AccountIdentifier");
+            Assert.IsNotNull(result);
+            Assert.AreEqual(true, result);
         }
 
         #endregion

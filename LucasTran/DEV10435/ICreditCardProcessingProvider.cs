@@ -9,5 +9,6 @@ namespace CardLab.CMS.Providers
         CreditCardDetailedRecord CreateCreditCard(Guid appicationKey, string userIdentifier, UserDetailRecord userInfo,
                                                   string cardNumber, string cvv2, int expirationMonth,
                                                   int expirationYear, CreditCardType cardType);
+        bool DeleteAccount(Guid applicationKey, string accountIdentifier);
     }
 }
