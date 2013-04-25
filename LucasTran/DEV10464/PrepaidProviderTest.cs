@@ -189,7 +189,7 @@ namespace CardLab.CMS.Test.Providers
         }
 
         [TestMethod]
-        public void CloseCard_Success()
+        public void CloseCardTest()
         {
             CloseCardRequestRecord requestRecord = new CloseCardRequestRecord()
             {

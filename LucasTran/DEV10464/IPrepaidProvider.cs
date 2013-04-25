@@ -12,5 +12,7 @@ namespace CardLab.CMS.Providers
         bool CardActivation(Guid applicationKey, string cardIdentifier, string actingUserIdentifier, string ipAddress, string activeData);
 
         List<CardTransactionRecord> RetrieveCardTransactions(Guid applicationKey, string cardIdentifier, DateTime startDate, DateTime endDate, int pageNumber, int numberPerPage, out int totalRecord);
+		
+		void CloseCard(Guid applicationKey, string actingUserIdentifier, string cardIdentifier);
     }
 }
