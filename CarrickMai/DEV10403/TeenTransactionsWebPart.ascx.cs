@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CardLab.CMS.PayjrSites.User;
+using CardLab.CMS.Util;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -10,83 +12,159 @@ namespace CMSApp.CMSWebParts.CardLab.Buxx.Account
 {
     public partial class TeenTransactionsWebPart : PayjrBaseWebPart
     {
-        string _startDate;
-        string _endDate;
-        protected void Page_Load(object sender, EventArgs e)
+        #region CMS Properties
+
+        protected string CardIdentifier
         {
-            //As a sample, need change input value
-            _listRecentTransactions.BindControl("cardIdentifier", DateTime.Now, DateTime.Now);
-
-            if (!IsPostBack)
+            get
             {
-
-                RadButton button = (RadButton)RadComboBox1.Footer.FindControl("RadButton2");
-                button.Click += new EventHandler(this.RadButton2_Click);
-                AddDataItems();
-                inItDatepicker();
-                _listRecentTransactions.StartDate.ToString() = _startDate;
-                _listRecentTransactions.EndDate.ToString() = _endDate;
+                if (ViewState["CardIdentifier"] == null)
+                {
+                    ViewState["CardIdentifier"] = String.Empty;
+                }
+                return (string)ViewState["CardIdentifier"];
+            }
+            set
+            {
+                ViewState["CardIdentifier"] = value;
             }
         }
-        protected void inItDatepicker()
-        {
-            RadDatePicker radDatepicker1 = (RadDatePicker)RadComboBox1.Footer.FindControl("RadDatePicker1");
-            RadDatePicker radDatepicker2 = (RadDatePicker)RadComboBox1.Footer.FindControl("RadDatePicker2");
-            radDatepicker1.MinDate = DateTime.Now.AddYears(-2);
-            radDatepicker1.SelectedDate = DateTime.Now.AddYears(-1);
-            radDatepicker2.SelectedDate = DateTime.Now;
-        }
-        protected void RadButton2_Click(object sender, EventArgs e)
-        {
-            RadDatePicker radDatepicker1 = (RadDatePicker)RadComboBox1.Footer.FindControl("RadDatePicker1");
-            RadDatePicker radDatepicker2 = (RadDatePicker)RadComboBox1.Footer.FindControl("RadDatePicker2");
-            _startDate = radDatepicker1.SelectedDate.Value.ToString();
-            _endDate = radDatepicker2.SelectedDate.Value.ToString();
-        }
-        protected void RadComboBox1_SelectedIndexChanged(object sender, RadComboBoxSelectedIndexChangedEventArgs e)
-        {
-            string stringdate = RadComboBox1.SelectedValue;
-            int pos = stringdate.IndexOf("-");
-            _startDate = stringdate.Substring(0, pos);
-            _endDate = stringdate.Substring(pos + 1, stringdate.Length - pos - 1);
-        }
-        public void AddDataItems()
-        {
-            RadComboBoxItem recentAcivity = new RadComboBoxItem();
-            recentAcivity.Text = "Recent Activity \t" + DateTime.Now.AddDays(-1).ToShortDateString() + " to " + DateTime.Now.ToShortDateString();
-            recentAcivity.Value = DateTime.Now.AddDays(-1).ToShortDateString() + " - " + DateTime.Now.ToShortDateString();
-            RadComboBox1.Items.Add(recentAcivity);
 
-            RadComboBoxItem currentStatement = new RadComboBoxItem();
-            currentStatement.Text = "Current Statement \t" + DateTime.Now.AddMonths(-1).ToShortDateString() + " to " + DateTime.Now.AddMonths(0).AddDays(-1).ToShortDateString();
-            currentStatement.Value = DateTime.Now.AddMonths(-1).ToShortDateString() + " - " + DateTime.Now.AddMonths(0).AddDays(-1).ToShortDateString();
-            RadComboBox1.Items.Add(currentStatement);
+        protected DateTime StartDate
+        {
+            get
+            {
+                if (ViewState["StartDate"] == null)
+                {
+                    ViewState["StartDate"] = EndDate.AddDays(-1);
+                }
+                return (DateTime)ViewState["StartDate"];
+            }
+            set
+            {
+                ViewState["StartDate"] = value;
+            }
+        }
+
+        protected DateTime EndDate
+        {
+            get
+            {
+                if (ViewState["EndDate"] == null)
+                {
+                    ViewState["EndDate"] = DateTime.Now.Date;
+                }
+                return (DateTime)ViewState["EndDate"];
+            }
+            set
+            {
+                ViewState["EndDate"] = value;
+            }
+        }
+        #endregion
+
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (!IsPostBack && CurrentUser is ParentUser)
+            {
+                RadButton button = (RadButton)_timePeriodCombo.Footer.FindControl("_Go");
+                button.Click += new EventHandler(this._GoClick);
+                AddDataItems();
+                inItDatepicker();
+            }
+            _listRecentTransactions.BindControl(CardIdentifier, StartDate, EndDate);
+
+        }
+
+
+        protected void _GoClick(object sender, EventArgs e)
+        {
+            RadDatePicker radDatepicker1 = (RadDatePicker)_timePeriodCombo.Footer.FindControl("RadDatePicker1");
+            RadDatePicker radDatepicker2 = (RadDatePicker)_timePeriodCombo.Footer.FindControl("RadDatePicker2");
+            StartDate = radDatepicker1.SelectedDate.Value;
+            EndDate = radDatepicker2.SelectedDate.Value;
+        }
+        protected void _timePeriodComboSelectedIndexChanged(object sender, RadComboBoxSelectedIndexChangedEventArgs e)
+        {
+            string stringdate = _timePeriodCombo.SelectedValue;
+            int pos = stringdate.IndexOf("-");
+            StartDate = DateTime.Parse(stringdate.Substring(0, pos));
+            EndDate = DateTime.Parse(stringdate.Substring(pos + 1, stringdate.Length - pos - 1));
+        }
+
+        protected void AddDataItems()
+        {
+            var listItem = new List<TestItem>();
+            DateTime firstDay = new DateTime(DateTime.Now.Year, 1, 1);
+            DateTime firstLastYear = new DateTime(DateTime.Now.Year - 1, 1, 1);
+            DateTime endLastYear = new DateTime(DateTime.Now.Year - 1, 12, 31);
+
+            listItem.Add(new TestItem
+            {
+                Column1 = "Recent Activity",
+                Column2 = DateTime.Now.AddMonths(-1).AddDays(-1).ToShortDateString() + " to " + DateTime.Now.ToShortDateString(),
+                Column3 = string.Format("Recent Activity   {0} to {1}", DateTime.Now.AddMonths(-1).AddDays(-1).ToShortDateString(), DateTime.Now.ToShortDateString()),
+                Column4 = DateTime.Now.AddMonths(-1).AddDays(-1).ToShortDateString() + " - " + DateTime.Now.ToShortDateString()
+            });
+            listItem.Add(new TestItem
+            {
+                Column1 = "Current Statement",
+                Column2 = DateTime.Now.AddMonths(-2).ToShortDateString() + " to " + DateTime.Now.AddMonths(-1).AddDays(-1).ToShortDateString(),
+                Column3 = string.Format("Current Statement   {0} to {1}", DateTime.Now.AddMonths(-2).ToShortDateString(), DateTime.Now.AddMonths(-1).AddDays(-1).ToShortDateString()),
+                Column4 = DateTime.Now.AddMonths(-2).ToShortDateString() + " - " + DateTime.Now.AddMonths(-1).AddDays(-1).ToShortDateString()
+            });
 
             for (int i = 0; i < DateTime.Now.Month; i++)
             {
                 if (i == 0)
                 {
-                    RadComboBox1.Items.Add(new RadComboBoxItem("Previous Statement \t" + DateTime.Now.AddMonths(-i).AddDays(-1).ToShortDateString() + " to " + DateTime.Now.AddMonths(-1).AddDays(-i).ToShortDateString(), DateTime.Now.AddMonths(-i).AddDays(-1).ToShortDateString() + " - " + DateTime.Now.AddMonths(-1).AddDays(-i).ToShortDateString()));
+                    listItem.Add(new TestItem
+                    {
+                        Column1 = "Previous Statement",
+                        Column2 = DateTime.Now.AddMonths(-i - 3).AddDays(-1).ToShortDateString() + " to " + DateTime.Now.AddMonths(-i - 2).AddDays(-i).ToShortDateString(),
+                        Column3 = string.Format("Previous Statement   {0} to {1}", DateTime.Now.AddMonths(-i - 3).AddDays(-1).ToShortDateString(), DateTime.Now.AddMonths(-1).AddDays(-i).ToShortDateString()),
+                        Column4 = DateTime.Now.AddMonths(-i - 3).AddDays(-1).ToShortDateString() + " - " + DateTime.Now.AddMonths(-i - 2).AddDays(-i).ToShortDateString()
+                    });
                 }
                 else
                 {
-                    RadComboBox1.Items.Add(new RadComboBoxItem(DateTime.Now.AddMonths(-i).ToShortDateString() + " to " + DateTime.Now.AddMonths(-i - 1).ToShortDateString(), DateTime.Now.AddMonths(-i).ToShortDateString() + " - " + DateTime.Now.AddMonths(-i - 1).ToShortDateString()));
+                    listItem.Add(new TestItem
+                    {
+                        Column1 = "",
+                        Column2 = DateTime.Now.AddMonths(-i - 3).AddDays(-1).ToShortDateString() + " to " + DateTime.Now.AddMonths(-2 - i).AddDays(-i).ToShortDateString(),
+                        Column3 = string.Format("Previous Statement   {0} to {1}", DateTime.Now.AddMonths(-i).AddDays(-1).ToShortDateString(), DateTime.Now.AddMonths(-1).AddDays(-i).ToShortDateString()),
+                        Column4 = DateTime.Now.AddMonths(-i - 3).AddDays(-1).ToShortDateString() + " - " + DateTime.Now.AddMonths(-2 - i).AddDays(-i).ToShortDateString()
+                    });
                 }
             }
+            listItem.Add(new TestItem
+            {
+                Column1 = "Year to Date",
+                Column2 = firstDay.ToShortDateString() + " to " + DateTime.Now.ToShortDateString(),
+                Column3 = string.Format("Year to Date   {0} to {1}", firstDay.ToShortDateString(), DateTime.Now.ToShortDateString()),
+                Column4 = firstDay.ToShortDateString() + " - " + DateTime.Now.ToShortDateString(),
+            });
+            listItem.Add(new TestItem
+            {
+                Column1 = "Year End Summary",
+                Column2 = firstLastYear.ToShortDateString() + " to " + endLastYear.ToShortDateString(),
+                Column3 = string.Format("Year End Summary   {0} to {1}", firstLastYear.ToShortDateString(), endLastYear.ToShortDateString()),
+                Column4 = firstLastYear.ToShortDateString() + " - " + endLastYear.ToShortDateString()
+            });
 
-            RadComboBoxItem yearToDate = new RadComboBoxItem();
-            DateTime firstDay = new DateTime(DateTime.Now.Year, 1, 1);
-            yearToDate.Text = "Year to Date \t" + firstDay.ToShortDateString() + " to " + DateTime.Now.ToShortDateString();
-            yearToDate.Value = firstDay.ToShortDateString() + " - " + DateTime.Now.ToShortDateString();
-            RadComboBox1.Items.Add(yearToDate);
+            RadComboBox1.DataSource = listItem;
+            RadComboBox1.DataTextField = "Column3";
+            RadComboBox1.DataValueField = "Column4";
+            RadComboBox1.DataBind();
+        }
 
-            RadComboBoxItem yearEndSummary = new RadComboBoxItem();
-            DateTime firstLastYear = new DateTime(DateTime.Now.Year - 1, 1, 1);
-            DateTime endLastYear = new DateTime(DateTime.Now.Year - 1, 12, 31);
-            yearEndSummary.Text = "Year End Summary \t" + firstLastYear.ToShortDateString() + " to " + endLastYear.ToShortDateString();
-            yearEndSummary.Value = firstLastYear.ToShortDateString() + " - " + endLastYear.ToShortDateString();
-            RadComboBox1.Items.Add(yearEndSummary);
-
+        protected void inItDatepicker()
+        {
+            RadDatePicker radDatepicker1 = (RadDatePicker)_timePeriodCombo.Footer.FindControl("RadDatePicker1");
+            RadDatePicker radDatepicker2 = (RadDatePicker)_timePeriodCombo.Footer.FindControl("RadDatePicker2");
+            radDatepicker1.MinDate = DateTime.Now.AddYears(-2);
+            radDatepicker1.SelectedDate = DateTime.Now.AddYears(-1);
+            radDatepicker2.SelectedDate = DateTime.Now;
         }
     }
 }
