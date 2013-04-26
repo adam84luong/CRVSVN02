@@ -28,10 +28,9 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
         {
             base.MyTestInitialize();
 
-            _teen1 = TestEntityFactory.CreateTeen(_parent, null);
-            TestEntityFactory.CreateUser(_teen1, _theme, _branding, _culture, null, false);
-            _teen2 = TestEntityFactory.CreateTeen(_parent, null);
-            TestEntityFactory.CreateUser(_teen2, _theme, _branding, _culture, null, false);
+        
+            TestEntityFactory.CreateTeen(_branding, _theme, _culture, _parent, out _teen1);
+            TestEntityFactory.CreateTeen(_branding, _theme, _culture, _parent, out _teen2);
 
             _userIdentifier1 = "PAYjrUser" + _teen1.UserID.ToString();
             _userIdentifier2 = "PAYjrUser" + _teen2.UserID.ToString();
@@ -44,7 +43,7 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
             var target = new SendToFulfillmentServiceCommand(ProviderFactory);
             var result = target.Execute(request);
             Assert.IsNotNull(result.Status);
-            Assert.IsTrue(result.Status.IsSuccessful);
+            Assert.IsTrue(result.Status.IsSuccessful);  
         }
 
         [TestMethod]
@@ -74,7 +73,7 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
 
         #region helper methods
 
-        private List<UpdateProductFulfillmentRecord> CreateUpdateProductFulfillmenetRecords()
+        private List<UpdateProductFulfillmentRecord> CreateUpdateProductFulfillmenetRecords(string productcodevalue)
         {
             List<UpdateProductFulfillmentRecord> result = new List<UpdateProductFulfillmentRecord>();
             result.Add(new UpdateProductFulfillmentRecord
@@ -86,13 +85,13 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
                 ProductName = "Buxx Card",
                 Quantity = 1,
                 Shipping = null,
-                Value = "3m82vyhx2",
+                Value = productcodevalue,
                 ValueData = ""
             });
             result.Add(new UpdateProductFulfillmentRecord
             {
                 IsPrimary = true,
-                LineItemIdentifier = "OrderLineItemIdentifier3",
+                LineItemIdentifier = "OrderLineItemIdentifier2",
                 Price = 5,
                 ProductCode = "110019",
                 ProductName = "Identity Check",
@@ -104,11 +103,11 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
             return result;
         }
 
-        private List<ProductFulfillmentLineItem> CreateProductLineItems()
+        private List<ProductFulfillmentLineItem> CreateProductLineItems(string productcodevalue)
         {
             List<ProductFulfillmentLineItem> productlineitems = new List<ProductFulfillmentLineItem>();
             ProductFulfillmentLineItem lineitem = new ProductFulfillmentLineItem();
-            lineitem.ProductRecords.AddRange(CreateUpdateProductFulfillmenetRecords());
+            lineitem.ProductRecords.AddRange(CreateUpdateProductFulfillmenetRecords(productcodevalue));
             productlineitems.Add(lineitem);
             return productlineitems;
         }
@@ -125,7 +124,7 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
 
             SendToFulfillmentRecord record1 = new SendToFulfillmentRecord();
             record1.CustomerType = "";
-            record1.ProductLineItems.AddRange(CreateProductLineItems());
+            record1.ProductLineItems.AddRange(CreateProductLineItems("3m82vyhx2"));
             record1.Ref1 = "";
             record1.ShipmentPackaging = new List<ShipmentPackaging>();
             record1.TransactionRecords = new List<Common.Contracts.ProductFulfillment.Records.TransactionRecord>();
@@ -134,7 +133,7 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
 
             SendToFulfillmentRecord record2 = new SendToFulfillmentRecord();
             record2.CustomerType = "";
-            record2.ProductLineItems.AddRange(CreateProductLineItems());
+            record2.ProductLineItems.AddRange(CreateProductLineItems("5m82vbhx2"));
             record2.Ref1 = "";
             record2.ShipmentPackaging = new List<ShipmentPackaging>();
             record2.TransactionRecords = new List<Common.Contracts.ProductFulfillment.Records.TransactionRecord>();

@@ -36,7 +36,6 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
             Teen teen;
             Guid user;
             PrepaidCardAccount prepaidAccount;
-            //CreateCardJob createCardJob;
             CustomCardDesign cardDesign;
             string sku;
 
@@ -65,11 +64,8 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
                                 }
                                 else
                                     prepaidAccount.CustomCardDesignID = custCardDgns.CustomCardDesignId;
-
+                               
                                  bool success1 = teen.Save(null);// da co create job va luu xuong db
-
-                                //createCardJob = (CreateCardJob)Job.RetrieveJob(prepaidAccount.CardCreateJob.JobID);
-                                //createCardJob.SaveJob(DateTime.Now);
 
                                 response.ResponseRecords.Add(record);
                             }
@@ -123,6 +119,5 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
             }
             Log.Debug("Ending validate the request. {0}/{1} record(s) passed validation", count, request.RequestRecords.Count);
         }
-         
     }
 }
