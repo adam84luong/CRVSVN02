@@ -1,4 +1,4 @@
-﻿using Authentication.Contracts.Authentication;
+using Authentication.Contracts.Authentication;
 using Common.Contracts.Shared.Records;
 using Common.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -51,6 +51,7 @@ namespace Payjr.Core.Test.ServiceCommands.Authentication
             Assert.IsTrue(teen.IsCancelled);
 
         }
+<<<<<<< HEAD
 
         [TestMethod]
         public void ExecuteTestSuccessful_WithRoleParent()
@@ -63,6 +64,20 @@ namespace Payjr.Core.Test.ServiceCommands.Authentication
             Assert.IsFalse(parent.IsLockedOut);
             Assert.AreEqual(1, parent.Teens.Count);
 
+=======
+
+        [TestMethod]
+        public void ExecuteTestSuccessful_WithRoleParent()
+        {
+            var request = CreateLocalRequest(true);
+            //newly created parent have actived status
+            var parent = User.RetrieveUser(_parent.UserID) as Parent;
+            Assert.IsTrue(parent.IsActive);
+            Assert.IsFalse(parent.MarkedForDeletion);
+            Assert.IsFalse(parent.IsLockedOut);
+            Assert.AreEqual(1, parent.Teens.Count);
+
+>>>>>>> DEV 10502 - DeleteUserServiceCommand - review lan 2
             var target = new DeleteUserServiceCommand(ProviderFactory);
             //init CardProvider
             ProviderFactory.SetupPrepaidCardProvider(_parent.Site, true);
@@ -123,3 +138,4 @@ namespace Payjr.Core.Test.ServiceCommands.Authentication
 
     }
 }
+
