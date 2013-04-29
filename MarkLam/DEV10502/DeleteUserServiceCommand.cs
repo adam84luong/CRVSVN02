@@ -1,6 +1,7 @@
 ﻿using Authentication.Contracts.Authentication;
 using Common.Exceptions;
 using Common.Service.Commands;
+using Payjr.Core.FinancialAccounts;
 using Payjr.Core.Metrics;
 using Payjr.Core.Providers;
 using Payjr.Core.Users;
@@ -14,8 +15,6 @@ namespace Payjr.Core.ServiceCommands.Authentication
 {
     public class DeleteUserServiceCommand : ProviderServiceCommand<IProviderFactory, MetricRecorder, LocalRequest, AuthServiceResponse>
     {
-        private string _userName;
-        private bool _isdeleteAllRelatedData;
         private User _user;
 
         public DeleteUserServiceCommand(IProviderFactory providerFactory)
@@ -26,67 +25,66 @@ namespace Payjr.Core.ServiceCommands.Authentication
         protected override bool OnExecute(AuthServiceResponse response)
         {
             response.Result = Result.Error;
-            try
+            switch (_user.RoleType)
             {
-                if (_user.RoleType == Entity.RoleType.RegisteredTeen)
-                {
+                case Entity.RoleType.RegisteredTeen:
                     Teen teen = _user as Teen;
                     if (teen != null)
                     {
                         Parent parent = teen.Parent;
                         if (parent != null)
                         {
-                            teen.CancelService(parent.UserID);
-                            response.Result = Result.Success;
-                            response.Data = _userName;
+                            if (teen.CancelService(parent.UserID))
+                            {
+                                response.Result = Result.Success;
+                                return true;
+                            }
                         }
                     }
-                }
-                else if (_user.RoleType == Entity.RoleType.Parent)
-                {
+                    break;
+                case Entity.RoleType.Parent:
                     Family family = new Family(_user);
+                    // this is only for testing
+                    if (Providers.PrepaidCardProvider != null)
+                    {
+                        foreach (var itemTeen in family.Teens)
+                        {
+                            foreach (var prepaidAccount in itemTeen.FinancialAccounts.PrepaidCardAccounts)
+                            {
+                                prepaidAccount.CardProvider = Providers.PrepaidCardProvider;
+                            }
+                            itemTeen.Site.PrepaidProvider = Providers.PrepaidCardProvider;
+                        }
+                    }
+
                     family.Delete();
                     response.Result = Result.Success;
-                    response.Data = _userName;
-                }
-                return true;
+                    break;
+                default:
+                    throw new InvalidOperationException("Delete User function only process for user that role is parent or teen");
             }
-            catch (Exception ex)
-            {
-                Log.Debug("Occur error while processing delete user:" + ex.Message);
-                throw new CardLabException (ex.Message);
-            }
+           if (response.Result != Result.Success)
+                return false;
+            return true;
         }
 
         protected override void Validate(LocalRequest request)
         {
             if (request == null)
             {
-                Log.Error("Delete User can not process with request is null");
-                throw new ArgumentNullException("request");
+                throw new ValidationException("Delete User can not process with request is null");
             }
-            if (request.Configuration == null)
+            string userName = request.UserName;
+            if (string.IsNullOrWhiteSpace(userName))
             {
-                Log.Error("Delete User can not process with request.Configuration is null");
-                throw new ArgumentException("request.Configuration must be set", "request");
+                throw new ValidationException("Delete User can not process with request.UserName has not value");
             }
-            if (!request.Configuration.ApplicationKey.HasValue)
-            {
-                Log.Error("Delete User can not process with request.Configuration.ApplicationKey has not value");
-                throw new ArgumentException("request.Configuration.ApplicationKey must be set", "request");
-            }
-            _userName = request.UserName;
-            if (string.IsNullOrWhiteSpace(_userName))
-            {
-                Log.Error("Delete User can not process with request.UserName has not value");
-                throw new ArgumentException("request.UserName must be set", "request");
-            }
-            List<User> users = User.SearchUsersByUserName(_userName);
+            List<User> users = User.SearchUsersByUserName(userName);
             var userCount = users.Count;
 
             if (userCount == 0 || userCount > 1)
             {
-                throw new ValidationException(string.Format("Could not determine exactly an User who has user name:{0}", _userName));
+                throw new ValidationException(string.Format("Could not determine exactly an User who has user name:{0}", userName));
             }
             _user = users[0];
         }

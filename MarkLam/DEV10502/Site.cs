@@ -220,7 +220,7 @@ namespace Payjr.Core.BrandingSite
                 return null;
             }
         }
-
+        ///mimic creditcard provider. (Set this with mocks only)
         public ICardProvider PrepaidProvider
         {
             get
@@ -230,6 +230,13 @@ namespace Payjr.Core.BrandingSite
                     return PrepaidModule.PrepaidProvider;
                 }
                 return null;
+            }
+            set
+            {
+                if (PrepaidModule != null)
+                {
+                    PrepaidModule.PrepaidProvider = value;
+                }
             }
         }
 
