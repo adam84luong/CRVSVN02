@@ -1,4 +1,4 @@
-﻿using Common.CreditGateway;
+using Common.CreditGateway;
 using Common.Metrics;
 using Common.Service.Providers;
 using Moq;
@@ -124,3 +124,4 @@ namespace Payjr.Core.Test.Providers
         
     }
 }
+
