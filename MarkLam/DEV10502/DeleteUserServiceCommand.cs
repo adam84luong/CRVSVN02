@@ -1,4 +1,4 @@
-﻿using Authentication.Contracts.Authentication;
+using Authentication.Contracts.Authentication;
 using Common.Exceptions;
 using Common.Service.Commands;
 using Payjr.Core.FinancialAccounts;
@@ -91,3 +91,4 @@ namespace Payjr.Core.ServiceCommands.Authentication
 
     }
 }
+ 
