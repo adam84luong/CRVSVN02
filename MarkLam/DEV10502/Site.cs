@@ -541,3 +541,4 @@ namespace Payjr.Core.BrandingSite
         #endregion //Methods
     }
 }
+
