@@ -84,6 +84,15 @@ namespace Payjr.Core.Test.Providers
             string outString;
             RMock.Expect.Call(ppProviderMock.ActivateCard(null, null, out outString, out outError)
                 ).IgnoreArguments().Return(true).OutRef(null, null).Repeat.Any();
+            RMock.Expect.Call(ppProviderMock.ReturnCounts)
+                .Return(1).Repeat.Any();
+            RMock.Expect.Call(ppProviderMock.PackagingKey)
+                           .Return(Guid.Empty).Repeat.Any();
+
+            RMock.Expect.Call(ppProviderMock.ChargeFee(null, -50, Common.FSV.WebService.FSVFee.MonthlyService, string.Empty, string.Empty, string.Empty, out outString, out outError)).IgnoreArguments()
+                           .Return(true).OutRef(string.Empty, null);
+            RMock.Expect.Call(ppProviderMock.DeactivateCard(string.Empty, string.Empty, out outString, out outError)).IgnoreArguments().Return(true).OutRef(string.Empty, null);
+
             RhinoMocks.Replay(ppProviderMock);
             PrepaidCardProvider = ppProviderMock;
         }
@@ -115,3 +124,4 @@ namespace Payjr.Core.Test.Providers
         
     }
 }
+

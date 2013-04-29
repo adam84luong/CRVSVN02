@@ -15,7 +15,10 @@ namespace Payjr.Core.Modules
         Guid? ACHProviderID { get; set; }
         IACHProvider ACHProvider { get; }
         Guid PrepaidProviderID { get; set; }
-        ICardProvider PrepaidProvider { get; }
+        /// <summary>
+        /// (Set this with mocks only)
+        /// </summary>
+        ICardProvider PrepaidProvider { get; set; }
         Guid? CreditProviderID { get; set; }
 
         /// <summary>
@@ -110,6 +113,7 @@ namespace Payjr.Core.Modules
                 }
                 return prepaidProvider;
             }
+            set { prepaidProvider = value; }
         }
 
         public Guid? CreditProviderID
