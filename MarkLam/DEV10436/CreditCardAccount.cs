@@ -1414,6 +1414,17 @@ namespace Payjr.Core.FinancialAccounts
             User owningUser = User.RetrieveUserByCreditCardAccountID(accountID);
             return owningUser.FinancialAccounts.GetAccountByID(accountID) as CreditCardAccount;
         }
+
+        public static CreditCardAccount RetrieveCreditCardAccountByID(Guid accountID, out User owner)
+        {
+            owner = User.RetrieveUserByCreditCardAccountID(accountID) as User;
+            if (owner != null)
+            {
+                return owner.FinancialAccounts.GetAccountByID(accountID) as CreditCardAccount;
+            }
+
+            return null;
+        }
         #endregion
 
         #region Capture Error Methods

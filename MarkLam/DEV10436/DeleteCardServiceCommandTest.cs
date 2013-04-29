@@ -20,56 +20,43 @@ namespace Payjr.Core.Test.ServiceCommands.CreditCardProcessing
     [TestClass]
     public class DeleteCardServiceCommandTest : TestBase2
     {
-       // private PrepaidModule _prepaidModule;
         private string _creditCardIdentifier1;
         private string _creditCardIdentifier2;
         [TestInitialize]
         public override void MyTestInitialize()
         {
             base.MyTestInitialize();
-
+            //create 2 credit card account for testing
+            TestEntityFactory.CreateCreditCardAccount(_parent, true, Entity.AccountStatus.AllowMoneyMovement, MockCreator.CreateFakeCreditCardNumber());
             TestEntityFactory.CreateCreditCardAccount(_parent, true, Entity.AccountStatus.AllowMoneyMovement, MockCreator.CreateFakeCreditCardNumber());
             var ppAcctId1 = _parent.FinancialAccounts.CreditCardAccounts[0].AccountID;
+            var ppAcctId2 = _parent.FinancialAccounts.CreditCardAccounts[1].AccountID;
             _creditCardIdentifier1 = new CreditCardIdentifier(ppAcctId1).DisplayableIdentifier;
-            _creditCardIdentifier2 = new CreditCardIdentifier(ppAcctId1).DisplayableIdentifier;
+            _creditCardIdentifier2 = new CreditCardIdentifier(ppAcctId2).DisplayableIdentifier;
         }
 
         [TestMethod]
         public void Execute_Successful()
         {
             var request = CreateDeleteCardRequest(true);
-            //check credit cart when it's just created.
-            foreach (var card in request.Requests)
-            {
-                var isCardDeleted = IsDeletedCreditCard(card.AccountIdentifier);
-                Assert.IsNotNull(isCardDeleted);
-                Assert.IsFalse(isCardDeleted.Value);
-            }
+            Assert.AreEqual(2, CreditCardAccount.RetrieveActiveAccountTotal());
             var target = new DeleteCardServiceCommand(ProviderFactory);
             var result = target.Execute(request);
             Assert.IsNotNull(result.Status);
             Assert.IsTrue(result.Status.IsSuccessful);
             Assert.AreEqual(2,result.Respones.Count);
+            Assert.IsTrue(result.Respones[0].IsDeleted);
+            Assert.IsTrue(result.Respones[1].IsDeleted);
             //re-check after excute delete card process
-            foreach (var card in result.Respones)
-            {
-                var isCardDeleted = IsDeletedCreditCard(card.AccountIdentifier);
-                Assert.IsNotNull(isCardDeleted);
-                Assert.IsTrue(isCardDeleted.Value);
-            }
+            Assert.AreEqual(0, CreditCardAccount.RetrieveActiveAccountTotal());
         }
+
         [TestMethod]
-        public void Execute_Successful_With1CardReturned()
+        public void Execute_Successful_With1CardDeleted()
         {
             var request = CreateDeleteCardRequest(true);
             //check credit cart when it's just created.
-            Assert.AreEqual(2, request.Requests.Count);
-            foreach (var card in request.Requests)
-            {
-                var isCardDeleted = IsDeletedCreditCard(card.AccountIdentifier);
-                Assert.IsNotNull(isCardDeleted);
-                Assert.IsFalse(isCardDeleted.Value);
-            }
+            Assert.AreEqual(2, CreditCardAccount.RetrieveActiveAccountTotal());
             //update to the second card is not found.
             request.Requests[1].AccountIdentifier = "CardIsNotFound";
             var target = new DeleteCardServiceCommand(ProviderFactory);
@@ -78,12 +65,8 @@ namespace Payjr.Core.Test.ServiceCommands.CreditCardProcessing
             Assert.IsTrue(result.Status.IsSuccessful);
             Assert.AreEqual(1,result.Respones.Count);
             //re-check after excute delete card process
-            foreach (var card in result.Respones)
-            {
-                var isCardDeleted = IsDeletedCreditCard(card.AccountIdentifier);
-                Assert.IsNotNull(isCardDeleted);
-                Assert.IsTrue(isCardDeleted.Value);
-            }
+            Assert.AreEqual(1, CreditCardAccount.RetrieveActiveAccountTotal());
+           
         }
        [TestMethod]
         public void Execute_Failure_RequestIsNull()
@@ -151,16 +134,7 @@ namespace Payjr.Core.Test.ServiceCommands.CreditCardProcessing
             }
             return result;
         }
-        private bool? IsDeletedCreditCard(string cardIdentifier)
-        {
-            Guid creditCardID = new CreditCardIdentifier(cardIdentifier).PersistableID;
-            CreditCardAccount creditCardAcount = CreditCardAccount.RetrieveCreditCardAccountByID(creditCardID);
-            if (creditCardAcount != null && creditCardAcount.MarkedForDeletion == true && creditCardAcount.Status == Entity.AccountStatus.DoNotAllowMoneyMovement)
-                return true;
-            else if (creditCardAcount != null && creditCardAcount.MarkedForDeletion == false && creditCardAcount.Status == Entity.AccountStatus.AllowMoneyMovement)
-                return false;
-            return null;
-        }
+        
         #endregion
 
     }

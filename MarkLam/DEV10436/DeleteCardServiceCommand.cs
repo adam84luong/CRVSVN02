@@ -1,4 +1,5 @@
-﻿using Common.Contracts.CreditCard.Records;
+﻿using Common.Business.Validation;
+using Common.Contracts.CreditCard.Records;
 using Common.Contracts.CreditCard.Requests;
 using Common.Contracts.CreditCard.Responses;
 using Payjr.Core.FinancialAccounts;
@@ -26,9 +27,17 @@ namespace Payjr.Core.ServiceCommands.CreditCardProcessing
                 {
                     AccountIdentifier = deleteCardRecord.AccountIdentifier
                 };
-
                 User ownerUser= null;
-                CreditCardAccount creditCardAccount = this.RetrieveCreditCardAccountByID(deleteCardRecord.AccountIdentifier, out ownerUser);
+                CreditCardAccount creditCardAccount =null;
+                try
+                {
+                     Guid creditCardID = new CreditCardIdentifier(deleteCardRecord.AccountIdentifier).PersistableID;
+                     creditCardAccount = CreditCardAccount.RetrieveCreditCardAccountByID(creditCardID, out ownerUser);
+                }
+                catch(Exception ex)
+                {
+                    Log.Debug(ex.Message);
+                }
                 if (creditCardAccount == null)
                 {
                     continue;
@@ -52,13 +61,13 @@ namespace Payjr.Core.ServiceCommands.CreditCardProcessing
         {
             if (request == null)
             {
-                throw new ArgumentNullException("request", "request must be set value");
+                throw new ValidationException("request must be set value");
             }
 
             var deleteCardRecords = request.Requests;
             if (deleteCardRecords == null || deleteCardRecords.Count == 0)
             {
-                throw new ArgumentException("DeleteCardsRecords must be set", "request.AddCardsRecords");
+                throw new ValidationException("DeleteCardsRecords must be set");
             }
             _deleteCardRecords = new List<DeleteCardRecord>();
             var pos = -1;
@@ -77,41 +86,6 @@ namespace Payjr.Core.ServiceCommands.CreditCardProcessing
             //if (count < deleteCardRecords.Count)
             Log.Debug("Ending validate the request. {0}/{1} record(s) passed validation", count, deleteCardRecords.Count);
         }
-
-        #region helper
-        private CreditCardAccount RetrieveCreditCardAccountByID(string cardIdentifier, out User userOwner)
-        {
-            CreditCardAccount creditCardAcount = null;
-            userOwner = null;
-            try
-            {
-                Guid creditCardID = new CreditCardIdentifier(cardIdentifier).PersistableID;
-                creditCardAcount = CreditCardAccount.RetrieveCreditCardAccountByID(creditCardID);
-                if (creditCardAcount == null)
-                {
-                    Log.Debug("Could not found Credit Card with ID={0}", creditCardID);
-                    return null;
-                }
-                if (!creditCardAcount.UserID.HasValue)
-                {
-                    Log.Debug("Could not determine the user who associated with the credit card - ID={0}", creditCardID);
-                    return null;
-                }
-                // get teen info
-                userOwner = User.RetrieveUser(creditCardAcount.UserID.Value);
-                if (userOwner == null)
-                {
-                    Log.Debug("Could not retrieve the User - ID={0}", creditCardAcount.UserID.Value);
-                    return null;
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Debug(ex.Message);
-                return null;
-            }
-            return creditCardAcount;
-        }
-        #endregion
+       
     }
 }
