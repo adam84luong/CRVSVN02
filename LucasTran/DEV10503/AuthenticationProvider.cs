@@ -260,5 +260,37 @@ namespace CardLab.CMS.Providers.Authentication
             status = response.CreateStatus;
             return null;
         }
+
+        public bool DeleteUser(Guid applicationKey, string username, bool deleteAllRelatedData)
+        {
+            AuthServiceResponse response;
+
+            try
+            {
+                response = CallService(() => CreateInstance().DeleteUser(applicationKey, username, deleteAllRelatedData));
+            }
+            catch (Exception ex)
+            {
+                Log.ErrorException(String.Format("An error occurred while delete user with Username: {0}.",
+                                        username), ex);
+                return false;
+            }
+
+            if (!response.Status.IsSuccessful)
+            {
+                Log.Debug("Delete User with Username: {0} unsuccessful. The error: {1}",
+                                        username, response.Status.ErrorMessage);
+                return false;
+            }
+
+            if (response.Result != Result.Success)
+            {
+                Log.Debug("Delete User with Username: {0} unsuccessful. {1} : {2}",
+                                        username, response.Result, response.Message);
+                return false;
+            }
+
+            return true;
+        }
     }
 }

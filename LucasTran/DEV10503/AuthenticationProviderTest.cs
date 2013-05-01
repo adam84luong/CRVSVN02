@@ -320,5 +320,102 @@ namespace CardLab.CMS.Test.Providers.Authentication
         }
 
         #endregion
+
+        #region Delete User
+
+        [TestMethod]
+        public void DeleteUserSuccess()
+        {
+            var response = new AuthServiceResponse()
+            {
+                Status = new ResponseStatusRecord()
+                {
+                    IsSuccessful = true
+                },
+                Result = Result.Success
+            };
+            
+            AuthenticationMock.Setup(mock =>
+                        mock.DeleteUser(It.IsAny<Guid>(),It.IsAny<string>(),It.IsAny<bool>())).Returns(response);
+
+            var target = new AuthenticationProvider(ProviderFactory, AuthenticationMock.Object);
+
+            var result = target.DeleteUser(new Guid(),"username",true);
+
+            Assert.AreEqual(result, true);
+        }
+
+        [TestMethod]
+        public void DeleteUser_IsSuccessful_fail()
+        {
+            var response = new AuthServiceResponse()
+            {
+                Status = new ResponseStatusRecord()
+                {
+                    IsSuccessful = false
+                },
+                Result = Result.Success
+            };
+
+            AuthenticationMock.Setup(mock =>
+                        mock.DeleteUser(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<bool>())).Returns(response);
+
+            var target = new AuthenticationProvider(ProviderFactory, AuthenticationMock.Object);
+
+            var result = target.DeleteUser(new Guid(), "username", true);
+
+            Assert.AreEqual(result, false);
+        }
+
+        [TestMethod]
+        public void DeleteUser_Result_fail()
+        {
+            Random random = new Random();
+
+            var response = new AuthServiceResponse()
+            {
+                Status = new ResponseStatusRecord()
+                {
+                    IsSuccessful = false
+                },
+
+                Result = GetRandomResult()
+            };
+
+            AuthenticationMock.Setup(mock =>
+                        mock.DeleteUser(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<bool>())).Returns(response);
+
+            var target = new AuthenticationProvider(ProviderFactory, AuthenticationMock.Object);
+
+            var result = target.DeleteUser(new Guid(), "username", true);
+
+            Assert.AreEqual(result, false);
+        }
+
+        #region helper
+
+        private Result GetRandomResult()
+        {
+            Result result = new Result();
+            Random random = new Random();
+          
+            switch (random.Next(3))
+            {
+                case 0:
+                    result = Result.Error;
+                    break;
+                case 1:
+                    result = Result.InvalidRegistration;
+                    break;
+                case 2:
+                    result = Result.Unknown;
+                    break;
+            }
+            return result;
+        }
+
+        #endregion
+
+        #endregion
     }
 }

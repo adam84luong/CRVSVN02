@@ -24,5 +24,7 @@ namespace CardLab.CMS.Providers.Authentication
 	                          string lastname, string password, string email, DateTime? dateOfBirth, string ssn,
 	                          List<string> roles, AddressRecord billingAddress, AddressRecord shippingAddress,
 	                          bool isActive, out MembershipCreateStatus status);
+        
+       bool DeleteUser(Guid applicationKey, string username, bool deleteAllRelatedData);
 	}
 }
