@@ -2,6 +2,7 @@
 using Common.Exceptions;
 using Common.Service.Commands;
 using Payjr.Core.FinancialAccounts;
+using Payjr.Core.Identifiers;
 using Payjr.Core.Metrics;
 using Payjr.Core.Providers;
 using Payjr.Core.Users;
@@ -74,21 +75,19 @@ namespace Payjr.Core.ServiceCommands.Authentication
             {
                 throw new ValidationException("Delete User can not process with request is null");
             }
-            string userName = request.UserName;
-            if (string.IsNullOrWhiteSpace(userName))
+            string userIdentifier = request.UserIdentifier;
+            if (string.IsNullOrWhiteSpace(userIdentifier))
             {
-                throw new ValidationException("Delete User can not process with request.UserName has not value");
+                throw new ValidationException("Delete User can not process with request.UserIdentifier has not value");
             }
-            List<User> users = User.SearchUsersByUserName(userName);
-            var userCount = users.Count;
+            var userID = new UserIdentifier(userIdentifier).ID;
+            _user = User.RetrieveUser(userID);
 
-            if (userCount == 0 || userCount > 1)
+            if (_user == null)
             {
-                throw new ValidationException(string.Format("Could not determine exactly an User who has user name:{0}", userName));
+                throw new ValidationException(string.Format("Could not determine exactly an User who has user identifier:{0}", userIdentifier));
             }
-            _user = users[0];
         }
 
     }
 }
- 

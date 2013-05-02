@@ -51,7 +51,6 @@ namespace Payjr.Core.Test.ServiceCommands.Authentication
             Assert.IsTrue(teen.IsCancelled);
 
         }
-<<<<<<< HEAD
 
         [TestMethod]
         public void ExecuteTestSuccessful_WithRoleParent()
@@ -64,20 +63,6 @@ namespace Payjr.Core.Test.ServiceCommands.Authentication
             Assert.IsFalse(parent.IsLockedOut);
             Assert.AreEqual(1, parent.Teens.Count);
 
-=======
-
-        [TestMethod]
-        public void ExecuteTestSuccessful_WithRoleParent()
-        {
-            var request = CreateLocalRequest(true);
-            //newly created parent have actived status
-            var parent = User.RetrieveUser(_parent.UserID) as Parent;
-            Assert.IsTrue(parent.IsActive);
-            Assert.IsFalse(parent.MarkedForDeletion);
-            Assert.IsFalse(parent.IsLockedOut);
-            Assert.AreEqual(1, parent.Teens.Count);
-
->>>>>>> DEV 10502 - DeleteUserServiceCommand - review lan 2
             var target = new DeleteUserServiceCommand(ProviderFactory);
             //init CardProvider
             ProviderFactory.SetupPrepaidCardProvider(_parent.Site, true);
@@ -102,40 +87,49 @@ namespace Payjr.Core.Test.ServiceCommands.Authentication
             Assert.IsTrue(result.Status.ErrorMessage.Contains("Delete User can not process with request is null"));
         }
         [TestMethod]
-        public void ExecuteTestFail_UserNameEmtpy()
+        public void ExecuteTestFail_UserIdentifierEmtpy()
         {
             var request = CreateLocalRequest(true);
-            request.UserName = string.Empty;
+            request.UserIdentifier = string.Empty;
             var target = new DeleteUserServiceCommand(ProviderFactory);
             var result = target.Execute(request);
             Assert.IsFalse(result.Status.IsSuccessful);
-            Assert.IsTrue(result.Status.ErrorMessage.Contains("Delete User can not process with request.UserName has not value"));
+            Assert.IsTrue(result.Status.ErrorMessage.Contains("Delete User can not process with request.UserIdentifier has not value"));
         }
         [TestMethod]
         public void ExecuteTestFail_UserNotExists()
         {
             var request = CreateLocalRequest(true);
-            request.UserName = "User Not Exists";
+            request.UserIdentifier = "User Not Exists";
             var target = new DeleteUserServiceCommand(ProviderFactory);
             var result = target.Execute(request);
             Assert.IsFalse(result.Status.IsSuccessful);
-            Assert.IsTrue(result.Status.ErrorMessage.Contains(string.Format("Could not determine exactly an User who has user name:{0}", request.UserName)));
+            Assert.IsTrue(result.Status.ErrorMessage.Contains(string.Format("Could not determine exactly an User who has user identifier:{0}", request.UserIdentifier)));
         }
 
         #region helper
         private LocalRequest CreateLocalRequest(bool initParentRole)
         {
+            string userIdentifier = string.Empty;
+            if (initParentRole)
+            {
+                 userIdentifier = new UserIdentifier(_parent.UserID).Identifier;
+            }
+            else
+            {
+                 userIdentifier = new UserIdentifier(_teen.UserID).Identifier;
+            }
+           
             var request = new LocalRequest
             {
                 Configuration = new RetrievalConfigurationRecord { ApplicationKey = Guid.NewGuid(), BrandingKey = Guid.NewGuid() },
                 Header = new RequestHeaderRecord { CallerName = "IAuthentication.DeleteUser" },
-                UserName = (initParentRole == true) ? _parent.UserName : _teen.UserName
+                UserIdentifier = userIdentifier
             };
             return request;
         }
-       
+
         #endregion
 
     }
 }
-
