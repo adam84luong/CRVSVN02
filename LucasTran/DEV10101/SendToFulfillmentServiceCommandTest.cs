@@ -11,6 +11,10 @@ using Payjr.Core.Users;
 using Common.Types;
 using Payjr.Core.Configuration;
 using Payjr.Entity.EntityClasses;
+using Payjr.Core.Jobs;
+using Payjr.Core.UserInfo;
+using Payjr.Core.FinancialAccounts;
+using IDENTIFIERS = Payjr.Core.Identifiers;
 
 namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
 {
@@ -21,6 +25,8 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
         private Teen _teen2;
         private string _userIdentifier1;
         private string _userIdentifier2;
+        string sku1 = "3m82vyhx2";
+        string sku2 = "yy33vyhx2";
 
 
         [TestInitialize]
@@ -28,7 +34,6 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
         {
             base.MyTestInitialize();
 
-        
             TestEntityFactory.CreateTeen(_branding, _theme, _culture, _parent, out _teen1);
             TestEntityFactory.CreateTeen(_branding, _theme, _culture, _parent, out _teen2);
 
@@ -42,10 +47,15 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
             SendToFulfillmentRequest request = CreateSendToFulfillmentRequest();
             var target = new SendToFulfillmentServiceCommand(ProviderFactory);
             var result = target.Execute(request);
+
+            CheckWritedForJob();
+            CheckWritedPrepaidCardAccount();
+            ChecWritedForCustomCardDesign();
+
             Assert.IsNotNull(result.Status);
             Assert.IsTrue(result.Status.IsSuccessful);  
         }
-
+       
         [TestMethod]
         public void Execute_Failure_RequestIsNull()
         {
@@ -122,9 +132,11 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
                 }
             };
 
+            TestEntityFactory.CreateUserCustomCardDesign(_teen1, sku1);
+            
             SendToFulfillmentRecord record1 = new SendToFulfillmentRecord();
             record1.CustomerType = "";
-            record1.ProductLineItems.AddRange(CreateProductLineItems("3m82vyhx2"));
+            record1.ProductLineItems.AddRange(CreateProductLineItems(sku1));
             record1.Ref1 = "";
             record1.ShipmentPackaging = new List<ShipmentPackaging>();
             record1.TransactionRecords = new List<Common.Contracts.ProductFulfillment.Records.TransactionRecord>();
@@ -133,14 +145,41 @@ namespace Payjr.Core.Test.ServiceCommands.ProductFulfillment
 
             SendToFulfillmentRecord record2 = new SendToFulfillmentRecord();
             record2.CustomerType = "";
-            record2.ProductLineItems.AddRange(CreateProductLineItems("5m82vbhx2"));
+            record2.ProductLineItems.AddRange(CreateProductLineItems(sku2));
             record2.Ref1 = "";
             record2.ShipmentPackaging = new List<ShipmentPackaging>();
             record2.TransactionRecords = new List<Common.Contracts.ProductFulfillment.Records.TransactionRecord>();
             record2.UserIdentifier = _userIdentifier2;
             result.RequestRecords.Add(record2);
-           
+
             return result;
+        }
+
+        private void CheckWritedPrepaidCardAccount()
+        {
+            var card1 = TestEntityFactory.RetrievePrepaidCardAccountsByUser(_teen1.UserID);
+            var card2 = TestEntityFactory.RetrievePrepaidCardAccountsByUser(_teen2.UserID);
+            Assert.AreEqual(1, card1.Count);
+            Assert.AreEqual(1, card2.Count);
+        }
+        private void ChecWritedForCustomCardDesign()
+        {
+            CustomCardDesignEntity carddesign1 = CustomCardDesign.RetrieveCardDesignByServerSideId(sku1);
+            CustomCardDesignEntity carddesign2 = CustomCardDesign.RetrieveCardDesignByServerSideId(sku2);
+            Assert.IsNotNull(carddesign1);
+            Assert.IsNotNull(carddesign2);
+        }
+        private void CheckWritedForJob()
+        {
+            var njList1 = Job.RetrieveJobs(_teen1.UserID);
+            var njList2 = Job.RetrieveJobs(_teen2.UserID);
+            Assert.AreEqual(2, njList1.Count);
+            Assert.AreEqual(1, njList2.Count);
+            bool check = false;
+            if ((njList1[0].JobType == Entity.JobType.CreateCardJob || njList1[1].JobType == Entity.JobType.CreateCardJob)
+                    && njList2[0].JobType == Entity.JobType.CreateCardJob)
+                check = true;
+            Assert.IsTrue(check);
         }
 
         #endregion

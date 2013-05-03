@@ -36,39 +36,42 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
             Teen teen;
             Guid user;
             PrepaidCardAccount prepaidAccount;
-            CustomCardDesign cardDesign;
+            CustomCardDesign cardDesign = null;
             string sku;
-
+            
             foreach (SendToFulfillmentRecord record in _fulfillmentRecords)
             {
                 user = new IDENTIFIERS.UserIdentifier(record.UserIdentifier).ID;
-                teen = User.RetrieveUser(user) as Teen;
+                teen = User.RetrieveUser(user) as Teen;   
 
-                prepaidAccount = teen.NewPrepaidCardAccount();
-                prepaidAccount.IsActive = true;// phai co thi moi luu xuong DB thanh cong cac bang CustomCardDesign, CustomCardDesignUser, Job, PrepaidCardAccount, PrepaidCardAccountUser
-  
-                using (DataAccessAdapter adapter = new DataAccessAdapter(true))
+                if (teen != null)
                 {
-                    foreach (ProductFulfillmentLineItem lineitem in record.ProductLineItems)
-                        foreach (UpdateProductFulfillmentRecord updaterecord in lineitem.ProductRecords)
-                            if (updaterecord.ProductCode == SystemConfiguration.CardProductCode)
-                            {
-                                sku = updaterecord.Value;
-                                var custCardDgns = AdapterFactory.CardDesignsDataAdapter.RetrieveCardDesignRegistration(adapter, sku);
-                                if (custCardDgns == null)
+                    prepaidAccount = teen.NewPrepaidCardAccount();
+                    if (prepaidAccount != null)
+                    {
+                        prepaidAccount.IsActive = true;
+                        foreach (ProductFulfillmentLineItem lineitem in record.ProductLineItems)
+                            foreach (UpdateProductFulfillmentRecord updaterecord in lineitem.ProductRecords)
+                                if (updaterecord.ProductCode == SystemConfiguration.CardProductCode)
                                 {
-                                    cardDesign = teen.NewCustomCardDesign();
-                                    cardDesign.Creator = RoleType.Parent;
-                                    cardDesign.SetDesign(sku);
-                                    prepaidAccount.CustomCardDesignID = cardDesign.CustomCardDesignID;
-                                }
-                                else
-                                    prepaidAccount.CustomCardDesignID = custCardDgns.CustomCardDesignId;
-                               
-                                 bool success1 = teen.Save(null);// da co create job va luu xuong db
-
-                                response.ResponseRecords.Add(record);
-                            }
+                                    sku = updaterecord.Value;
+                                    var customCardDesign = CustomCardDesign.RetrieveCardDesignByServerSideId(sku);
+                                    if (customCardDesign == null)
+                                    {
+                                        cardDesign = teen.NewCustomCardDesign();
+                                        cardDesign.Creator = RoleType.RegisteredTeen;
+                                        cardDesign.SetDesign(sku);
+                                        prepaidAccount.CustomCardDesignID = cardDesign.CustomCardDesignID;
+                                    }
+                                    else
+                                        prepaidAccount.CustomCardDesignID = customCardDesign.CustomCardDesignId;
+                                 }
+          
+                    }
+                    if (teen.Save(null))
+                        response.ResponseRecords.Add(record);
+                    else
+                        Log.Error("Error saving teen with UserIdentifier: " + record.UserIdentifier);     
                 }
             }
             return true;
@@ -108,14 +111,11 @@ namespace Payjr.Core.ServiceCommands.ProductFulfillment
                     continue;
                 }
                 else
-                    foreach(var lineitem in productFulfillmentLineItems)
-                        foreach(var product in lineitem.ProductRecords)
-                            if (product.ProductCode == SystemConfiguration.CardProductCode)
-                            {
-                                _fulfillmentRecords.Add(record);
-                                count++;
-                                break;
-                            }
+                {
+                    _fulfillmentRecords.Add(record);
+                    count++;
+                }
+                
             }
             Log.Debug("Ending validate the request. {0}/{1} record(s) passed validation", count, request.RequestRecords.Count);
         }

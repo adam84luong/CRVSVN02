@@ -489,6 +489,19 @@ namespace Payjr.Core.UserInfo
             }
         }
 
+        /// <summary>
+        /// Retrieve Custom Card Design by the specified server side ID.
+        /// </summary>
+        /// <param name="serverSideID">The server side ID.</param>
+        public static CustomCardDesignEntity RetrieveCardDesignByServerSideId(string serverSideId)
+        {
+            using (DataAccessAdapter adapter = new DataAccessAdapter(true))
+            {
+                CustomCardDesignEntity customCardDesign = AdapterFactory.CardDesignsDataAdapter.RetrieveCardDesignRegistration(adapter, serverSideId);
+                return customCardDesign;
+            }
+        }
+
 
         #endregion //methods
 
