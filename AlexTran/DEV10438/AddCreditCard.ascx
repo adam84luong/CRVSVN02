@@ -1,8 +1,8 @@
-﻿<%@ Control Language="C#" AutoEventWireup="true" CodeBehind="CreaditCardFundingInformation.ascx.cs" Inherits="CMSApp.Controls.Buxx.Account.CreaditCardFundingInformation" %>
+﻿<%@ Control Language="C#" AutoEventWireup="true" CodeBehind="AddCreditCard.ascx.cs" Inherits="CMSApp.Controls.Buxx.Account.AddCreditCard" %>
  
 <div class="buxx-box">
     <div class="buxx-box-head">
-        <h3>Load Information</h3>
+        <h3>Card Information</h3>
     </div>
     <div class="box_body">
         <ul class="form-input">         

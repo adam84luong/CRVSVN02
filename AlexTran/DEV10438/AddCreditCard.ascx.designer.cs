@@ -8,9 +8,10 @@
 //------------------------------------------------------------------------------
 
 namespace CMSApp.Controls.Buxx.Account {
-    
-    
-    public partial class CreaditCardFundingInformation {
+
+
+    public partial class AddCreditCard
+    {
         
         /// <summary>
         /// _cardNumberRequestValidator control.

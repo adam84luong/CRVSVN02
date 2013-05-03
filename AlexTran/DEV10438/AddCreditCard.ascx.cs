@@ -6,7 +6,7 @@ using System;
 
 namespace CMSApp.Controls.Buxx.Account
 {
-    public partial class CreaditCardFundingInformation : BuxxBaseControl, ICreditCardInfo
+    public partial class AddCreditCard : BuxxBaseControl, ICreditCardInfo
     {
         #region Properties
 

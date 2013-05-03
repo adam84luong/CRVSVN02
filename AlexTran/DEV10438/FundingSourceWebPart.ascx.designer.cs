@@ -10,7 +10,7 @@
 namespace CMSApp.CMSWebParts.CardLab.Buxx.Account {
     
     
-    public partial class AddCreaditCardFundingWebPart {
+    public partial class FundingSourceWebPart {
         
         /// <summary>
         /// _validationSummary control.
@@ -22,31 +22,49 @@ namespace CMSApp.CMSWebParts.CardLab.Buxx.Account {
         protected global::System.Web.UI.WebControls.ValidationSummary _validationSummary;
         
         /// <summary>
-        /// _productImage control.
+        /// _formFundingSourceList control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Image _productImage;
+        protected global::System.Web.UI.WebControls.Panel _formFundingSourceList;
         
         /// <summary>
-        /// _skuLabel control.
+        /// _showAddButton control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label _skuLabel;
+        protected global::Telerik.Web.UI.RadButton _showAddButton;
         
         /// <summary>
-        /// _creaditCardFundingInformation control.
+        /// _creditCardFundingSourceList control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::CMSApp.Controls.Buxx.Account.CreaditCardFundingInformation _creaditCardFundingInformation;
+        protected global::CMSApp.Controls.Buxx.Account.CreditCardFundingSourceList _creditCardFundingSourceList;
+        
+        /// <summary>
+        /// _formAddCard control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel _formAddCard;
+        
+        /// <summary>
+        /// _addCreditCard control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::CMSApp.Controls.Buxx.Account.AddCreditCard _addCreditCard;
         
         /// <summary>
         /// _agreeTermCheckBox control.
@@ -67,13 +85,22 @@ namespace CMSApp.CMSWebParts.CardLab.Buxx.Account {
         protected global::System.Web.UI.WebControls.HyperLink _agreementLink;
         
         /// <summary>
-        /// _orderCardButton control.
+        /// _addCreditCardButton control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::Telerik.Web.UI.RadButton _orderCardButton;
+        protected global::Telerik.Web.UI.RadButton _addCreditCardButton;
+        
+        /// <summary>
+        /// _orderCardDisibleLabel control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label _orderCardDisibleLabel;
         
         /// <summary>
         /// _radScriptBlock control.
