@@ -10,7 +10,7 @@
 namespace CMSApp.CMSWebParts.CardLab.Buxx.Account {
     
     
-    public partial class TeenTransactionsWebPart {
+    public partial class TeenOverviewWebPart {
         
         /// <summary>
         /// _teenListTab control.
@@ -22,22 +22,13 @@ namespace CMSApp.CMSWebParts.CardLab.Buxx.Account {
         protected global::CMSApp.Controls.Buxx.Account.TeenListTab _teenListTab;
         
         /// <summary>
-        /// _teenName control.
+        /// _teenSummaryViewer control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label _teenName;
-        
-        /// <summary>
-        /// _timePeriodCombo control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::Telerik.Web.UI.RadComboBox _timePeriodCombo;
+        protected global::CMSApp.Controls.Buxx.Account.TeenSummaryViewer _teenSummaryViewer;
         
         /// <summary>
         /// _listRecentTransactions control.
@@ -47,5 +38,32 @@ namespace CMSApp.CMSWebParts.CardLab.Buxx.Account {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::CMSApp.Controls.Buxx.Account.ListRecentTransactions _listRecentTransactions;
+        
+        /// <summary>
+        /// _transactionLink control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HyperLink _transactionLink;
+        
+        /// <summary>
+        /// _listPendingLoads control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::CMSApp.Controls.Buxx.Account.ListPendingLoads _listPendingLoads;
+        
+        /// <summary>
+        /// _pendingLink control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HyperLink _pendingLink;
     }
 }

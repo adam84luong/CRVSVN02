@@ -31,7 +31,7 @@ namespace CMSApp.Controls.Buxx.Account
             {
                 if (ViewState["StartDate"] == null)
                 {
-                    ViewState["StartDate"] = EndDate.AddDays(-10);
+                    ViewState["StartDate"] = EndDate.AddMonths(-1);
                 }
                 return (DateTime)ViewState["StartDate"];
             }
@@ -154,27 +154,23 @@ namespace CMSApp.Controls.Buxx.Account
         {
             
         }
-
-
+        
         #endregion
-
 
         #region Helper Method
 
         private void BindDataToTransactionGrid(string cardIdentifier, int currentPageIndex, int pageSize)
         {
-            _transactionGrid.PageSize = pageSize;
-            _transactionGrid.CurrentPageIndex = currentPageIndex;
             int totalRecord;
             var ccBusiness = PrepaidCardBusiness.Instance(PayjrSystemInfo);
             _transactionGrid.DataSource = ccBusiness.GetCardTransaction(cardIdentifier, StartDate, EndDate, currentPageIndex + 1, pageSize, out totalRecord);
-            _transactionGrid.VirtualItemCount = totalRecord;
+            _transactionGrid.VirtualItemCount = totalRecord;   
+            _transactionGrid.PageSize = pageSize;
+            _transactionGrid.CurrentPageIndex = currentPageIndex;
             _transactionGrid.DataBind();     
         }
 
-        #endregion
-
-    
+        #endregion 
         
     }
 }
