@@ -1,5 +1,0 @@
-1. UserIdentifier trong request => su dung class UserIdentifier de parse ra duoc UserID (la mot Guid)
-2. goi ham static User.RetrieveUser(UerID), casting thanh Teen => ra duoc mot biến teen
-3. goi prepaidAccount = teen.NewPrepaidCardAccount()
-4. bo sung them thong tin cho prepaid account dựa vào thông tin trong request
-4. goi teen.Save()
